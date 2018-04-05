@@ -1,8 +1,9 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
-.doc
-.pdf
-.docx
-.nc
+*.Rproj.user
+*.Rhistory
+*.RData
+*.Ruserdata
+*.doc
+*.pdf
+*.docx
+*.nc
+*.Rproj
