@@ -8,6 +8,7 @@ Repository with work on kelp forest fish from Baja peninsula. Two works included
 
 ## Structure of the repo
 
+```
 kelpy:
 ├───data
 │   └───Tidy
@@ -23,3 +24,4 @@ kelpy:
 │       ├───shp
 │       └───temp
 └───scripts
+```
