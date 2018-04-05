@@ -1,7 +1,12 @@
 ---
 title: "Fix 2013 data"
-output: html_notebook
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
 ---
+
+These data are for the sizes project
 
 # The problem
 
@@ -15,6 +20,7 @@ I will read all sheets, and put them together into a standard format where each 
 suppressPackageStartupMessages({
   library(readxl)
   library(tidyverse)
+  library(here)
   library(rfishbase)
 })
 ```
@@ -22,7 +28,7 @@ suppressPackageStartupMessages({
 Lets first take a look at all the sheets in the excel workbook
 
 ```{r}
-all_sheets <- readxl::excel_sheets("../Raw/KelpForestFish/datos2013.xls")
+all_sheets <- readxl::excel_sheets(here("raw_data", "kelp_forest_fish","datos2013.xls"))
 
 all_sheets
 
@@ -36,13 +42,12 @@ Let's read all sheets and try to put them together
 
 read_excel_allsheets <- function(filename) {
     sheets <- readxl::excel_sheets(filename)
-    x <-    lapply(sheets, function(X) readxl::read_excel(filename, sheet = X, col_names = T))
+    x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X, col_names = T))
     names(x) <- sheets
-    x
+    return(x)
 }
 
-all_data <- read_excel_allsheets("../Raw/KelpForestFish/datos2013.xls")
-
+all_data <- read_excel_allsheets(here("raw_data", "kelp_forest_fish","datos2013.xls"))
 
 ```
 
@@ -75,7 +80,8 @@ tidy_data <- all_data %>%
          Habitat = substring(ID, nchar(ID)-1, nchar(ID)-1),
          Transect = substring(ID, nchar(ID)),
          Year = 2013,
-         Area = 60)
+         Area = 60,
+         Length = as.numeric(length))
 
 tidy_data$Record <- seq(1, dim(tidy_data)[1])
 
@@ -105,7 +111,13 @@ taxa <- load_taxa() %>%
 Obtain some important species info
 
 ```{r}
-sp_info <- species(species_list = sp_list, fields = c("BodyShapeI", "DemersPelag", "PriceCateg", "UsedasBait", "Aquarium", "Comments", "Importance")) %>% 
+sp_info <- species(species_list = sp_list, fields = c("BodyShapeI",
+                                                      "DemersPelag",
+                                                      "PriceCateg",
+                                                      "UsedasBait",
+                                                      "Aquarium",
+                                                      "Comments",
+                                                      "Importance")) %>% 
   rename(GenusSpecies = sciname)
 ```
 
@@ -116,15 +128,39 @@ tidy_data <- tidy_data %>%
   left_join(species_bio, by = c("GenusSpecies" = "GeneroEspecie")) %>% 
   left_join(sp_info, by = "GenusSpecies") %>% 
   left_join(taxa, by = "GenusSpecies") %>% 
-  select(ID, Site, Zone, Level = Habitat, Transect, Class, Order, Family, Genus, GenusSpecies, Length, Abundance, aTL2TW = a, bTL2TW = b, TrophicLevel, Lm, Lmax, BodyShape = BodyShapeI, DemersPelag, PriceCateg, UsedasBait, Aquarium, Importance, Comments)
+  select(ID,
+         Site,
+         Zone,
+         Level = Habitat,
+         Transect,
+         Class,
+         Order,
+         Family,
+         Genus,
+         GenusSpecies,
+         Length,
+         Abundance,
+         aTL2TW = a,
+         bTL2TW = b,
+         NT,
+         Lm,
+         Lmax,
+         BodyShape = BodyShapeI,
+         DemersPelag,
+         PriceCateg,
+         UsedasBait,
+         Aquarium,
+         Importance,
+         Comments) %>% 
+  janitor::clean_names()
 
 head(tidy_data)
 ```
 
 And export it now
 
-```{r, eval = F}
-write.csv(tidy_data, "tidy_data.csv", row.names = F)
+```{r}
+write.csv(tidy_data, here("data","tidy_data_2013.csv"), row.names = F)
 ```
 
 
