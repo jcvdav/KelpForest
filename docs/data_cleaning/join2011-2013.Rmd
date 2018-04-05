@@ -1,0 +1,116 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+suppressPackageStartupMessages({
+  library(sp)
+  library(tmap)
+  library(rgdal)
+  library(rfishbase)
+  library(MPAtools)
+  library(tidyverse)
+})
+```
+
+```{r}
+data <- read_csv(file = "Data/Raw/KelpForestFish/Fish2011-2013.csv", trim_ws = T, col_types = cols()) %>% 
+  filter(!GenusSpecies == "Especie X") %>% 
+  mutate(GenusSpecies = ifelse(GenusSpecies == "Xenistius californiensis", "Haemulon californiensis", GenusSpecies),
+         GenusSpecies = ifelse(GenusSpecies == "Urobatis halleri", "Urolophus halleri", GenusSpecies),
+         GenusSpecies = ifelse(GenusSpecies == "Gibbonsia elgans/montereyensis", "Gibbonsia elegans", GenusSpecies),
+         GenusSpecies = ifelse(GenusSpecies == "Scorpaena rubrivinctus", "Sebastes rubrivinctus", GenusSpecies),
+         GenusSpecies = ifelse(GenusSpecies == "Engraulix mordax/A. compressa", "Engraulis mordax", GenusSpecies),
+         GenusSpecies = ifelse(GenusSpecies == "Artedius sp.", "Artedius spp", GenusSpecies),
+         GenusSpecies = ifelse(GenusSpecies == "Sebastes sp", "Sebastes spp", GenusSpecies),
+         GenusSpecies = ifelse(GenusSpecies == "Pareques sp", "Pareques spp", GenusSpecies),
+         Level = ifelse(Level == "Fondo", "Bottom", "Midwater"),
+         Site = ifelse(Site == "Norte", "N", "S"),
+         Zone = ifelse(Zone == "Expuesto", "Exposed", Zone),
+         Zone = ifelse(Zone == "Protegido", "Protected", Zone))
+```
+
+```{r}
+sp_list <- unique(data$GenusSpecies)
+
+species_bio <- MPAtools::species_bio %>% 
+  select(GeneroEspecie, a, b, NT, Lm, Lmax)
+```
+
+```{r}
+taxa <- load_taxa() %>% 
+  mutate(GenusSpecies = paste(Genus, Species)) %>% 
+  select(GenusSpecies, Class, Order, Family, Genus) %>% 
+  filter(GenusSpecies %in% sp_list)
+```
+
+```{r}
+sp_info <- species(species_list = sp_list, fields = c("BodyShapeI", "DemersPelag", "PriceCateg", "UsedasBait", "Aquarium", "Comments", "Importance")) %>% 
+  rename(GenusSpecies = sciname)
+```
+
+```{r}
+kelp <- read.csv(file = "Data/Tidy/KelpDensitiesTransect.csv") %>% 
+  select(ID, KelpAbundanceTransect, KelpDensityTransect)
+```
+
+```{r}
+data$Record <- seq(1, length(data$ID))
+
+data_final <- data %>%  
+  left_join(species_bio, by = c("GenusSpecies" = "GeneroEspecie")) %>% 
+  left_join(sp_info, by = "GenusSpecies") %>% 
+  left_join(taxa, by = "GenusSpecies") %>% 
+  mutate(ID = paste0(Year, Location, Site, Transect)) %>% 
+  left_join(kelp, by = "ID") %>% 
+  mutate(ID = paste(Year, Location, Site, Level, Transect, sep = "-")) %>% 
+  select(Record, ID, Year, Latitude, Longitude, Location, Site, Zone, Level, Transect, Class, Order, Family, Genus, GenusSpecies, TotalLength, Abundance, KelpAbundance = KelpAbundanceTransect, KelpDensity = KelpDensityTransect, aTL2TW = a, bTL2TW = b, TrophicLevel = NT, Lm, Lmax, BodyShape = BodyShapeI, DemersPelag, PriceCateg, UsedasBait, Aquarium, Importance, Comments) %>% 
+  mutate(Class = ifelse(GenusSpecies == "Sebastes spp", "Actinopterygii", Class),
+         Order = ifelse(GenusSpecies == "Sebastes spp", "Scorpaeniformes", Order),
+         Family = ifelse(GenusSpecies == "Sebastes spp", "Sebastidae", Family),
+         Genus = ifelse(GenusSpecies == "Sebastes spp", "Sebastes", Genus))
+
+head(data_final)
+```
+
+```{r, eval = F}
+write_csv(data_final, path = "./Data/Tidy/Peces_KelpForest_2011-2013.csv")
+```
+
+```{r}
+
+# set a working directory for spatial datasets
+dir = "./Data/Spatial"
+
+# load the state shapefile
+stat <- readOGR(dsn = dir, layer = "muni_2015gw", verbose = F)
+
+# Define peninsula shapefile
+baja <- stat[stat$NOM_ENT %in% c("Baja California", "Baja California Sur"),]
+
+# Define the coordenate reference system
+proj <- CRS("+proj=lcc +lat_1=17.5 +lat_2=29.5 +lat_0=0 +lon_0=-102 +x_0=2000000 +y_0=0 +datum=NAD27 +units=m +no_defs +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat")
+proj2 <- CRS("+proj=longlat +datum=NAD27")
+
+#convert the spatial points in length data to shapefile
+length_data <- group_by(data_final, Year, Location) %>% 
+  summarize(Latitude = mean(Latitude, na.rm = T),
+            Longitude = mean(Longitude, na.rm = T))
+
+xy <- data.frame(X = length_data$Longitude, Y = length_data$Latitude)
+coordinates(xy) <- c("X", "Y")
+proj4string(xy) <- proj2  ## for example
+res <- spTransform(xy, proj2)
+b <- SpatialPointsDataFrame(coords = res, data = length_data, proj4string = proj2)
+
+tm_shape(baja, is.master = TRUE) +
+  tm_polygons() +
+  tm_shape(b) +
+  tm_bubbles(size = 0.25, border.col = "black", col = "black", shape = 20) +
+  tm_layout(legend.position = c("RIGHT", "TOP")) +
+  tm_compass(position = c("RIGHT", "TOP")) +
+  tm_facets(by = "Year")
+
+```
+

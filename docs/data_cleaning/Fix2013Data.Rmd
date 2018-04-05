@@ -1,0 +1,142 @@
+---
+title: "Fix 2013 data"
+output: html_notebook
+---
+
+# The problem
+
+For some reason, back in 2013 I thought it would be a good idea to keep one excel sheet per transect, with one column of species name and one column of each size class, having an m-by-n matrix where each cell was the abundance of species m in size class n. Now that I understand the `tidyverse`, this must change.
+
+# Solution
+
+I will read all sheets, and put them together into a standard format where each column is a variable and each row is a record. The minimum column names will be Year, Site, Zone, Level, Latitude, Longitude, Transect, GenusSpecies, Abundance, and Length.
+
+```{r}
+suppressPackageStartupMessages({
+  library(readxl)
+  library(tidyverse)
+  library(rfishbase)
+})
+```
+
+Lets first take a look at all the sheets in the excel workbook
+
+```{r}
+all_sheets <- readxl::excel_sheets("../Raw/KelpForestFish/datos2013.xls")
+
+all_sheets
+
+```
+
+Luckily, I considered having a standard code for each sheet. Here, the first three letters indicate the site code, then the zone (north or south), level (bottom or midwater transect), and transect numner. For example, the first sheet `r all_sheets[1]` is for Isla Coronado on the northern zone where we did bottom transect number 1. I will use this codes to fill in each column later.
+
+Let's read all sheets and try to put them together
+
+```{r}
+
+read_excel_allsheets <- function(filename) {
+    sheets <- readxl::excel_sheets(filename)
+    x <-    lapply(sheets, function(X) readxl::read_excel(filename, sheet = X, col_names = T))
+    names(x) <- sheets
+    x
+}
+
+all_data <- read_excel_allsheets("../Raw/KelpForestFish/datos2013.xls")
+
+
+```
+
+The variable `all_data` is a `r class(all_data)`, where each element within it is of class `r class(all_data$ICONF1)`. We can now turn this into `a data.frame`
+
+```{r}
+all_data <- all_data %>% 
+  plyr::ldply(data.frame)
+
+head(all_data)
+```
+
+This looks way better. We can now do some changes to it. Lets start by defining correct column names.
+
+```{r}
+colnames(all_data) <- c("ID", "GenusSpecies", seq(5, 130, by = 5))
+```
+
+We have all the data together, but this is not a stiddy format yet. Lets use `dplyr::gather` to put fish lengths into one column called `Length`. We can also ad a column for Year
+
+```{r, include = TRUE}
+tidy_data <- all_data %>% 
+  gather(Length, Abundance, -c(ID, GenusSpecies)) %>%
+  filter(!is.na(Abundance)) %>% 
+  filter(!Abundance == 0) %>% 
+  mutate(GenusSpecies = ifelse(GenusSpecies == "Sebastes_atrovirens_", "Sebastes_atrovirens", GenusSpecies),
+         GenusSpecies = gsub("_", " ", GenusSpecies)) %>% 
+  mutate(Site = substring(ID, 1, nchar(ID)-3),
+         Zone = substring(ID, nchar(Site)+1, nchar(ID)-2),
+         Habitat = substring(ID, nchar(ID)-1, nchar(ID)-1),
+         Transect = substring(ID, nchar(ID)),
+         Year = 2013,
+         Area = 60)
+
+tidy_data$Record <- seq(1, dim(tidy_data)[1])
+
+head(tidy_data)
+```
+Length-weight
+
+```{r, message = F, warning = F}
+library(rfishbase)
+sp_list <- unique(tidy_data$GenusSpecies)
+
+species_bio <- MPAtools::species_bio %>% 
+  select(GeneroEspecie, a, b, NT, Lm, Lmax)
+
+```
+
+Get taxonomy
+
+```{r}
+taxa <- load_taxa() %>% 
+  mutate(GenusSpecies = paste(Genus, Species)) %>% 
+  select(GenusSpecies, Class, Order, Family, Genus) %>% 
+  filter(GenusSpecies %in% sp_list)
+```
+
+
+Obtain some important species info
+
+```{r}
+sp_info <- species(species_list = sp_list, fields = c("BodyShapeI", "DemersPelag", "PriceCateg", "UsedasBait", "Aquarium", "Comments", "Importance")) %>% 
+  rename(GenusSpecies = sciname)
+```
+
+Lets incorporate some usefull data, like $\alpha$ and $\beta$ allometric growth parameters for each fish.
+
+```{r}
+tidy_data <- tidy_data %>% 
+  left_join(species_bio, by = c("GenusSpecies" = "GeneroEspecie")) %>% 
+  left_join(sp_info, by = "GenusSpecies") %>% 
+  left_join(taxa, by = "GenusSpecies") %>% 
+  select(ID, Site, Zone, Level = Habitat, Transect, Class, Order, Family, Genus, GenusSpecies, Length, Abundance, aTL2TW = a, bTL2TW = b, TrophicLevel, Lm, Lmax, BodyShape = BodyShapeI, DemersPelag, PriceCateg, UsedasBait, Aquarium, Importance, Comments)
+
+head(tidy_data)
+```
+
+And export it now
+
+```{r, eval = F}
+write.csv(tidy_data, "tidy_data.csv", row.names = F)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
