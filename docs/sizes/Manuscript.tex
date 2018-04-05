@@ -1,0 +1,412 @@
+\documentclass[12pt,]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{\Large{Fished species exhibit latitudinal patterns in size structures along Baja California Peninsula}}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \author{}
+  \preauthor{}\postauthor{}
+  \date{}
+  \predate{}\postdate{}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+\usepackage{wrapfig}
+\usepackage{setspace}
+\doublespacing
+\usepackage{lineno}
+\linenumbers
+\usepackage{pdflscape}
+
+\begin{document}
+\maketitle
+
+\textbf{Authors}
+
+Juan Carlos Villaseñor-Derbez\(^{1, 2}\), C. Gabriela
+Montaño-Moctezuma\(^3\), Guillermo Torres-Moye\(^1\), Antonio
+Trujillo-Ortiz\(^1\), Arturo Ramírez-Valdez\(^{1, 4}\)
+
+\textbf{Adscriptions}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Facultad de Ciencias Marinas, Universidad Autónoma de Baja California,
+  Km. 103 Carretera Tijuana-Ensenada, Ensenada, Baja California, México
+  C.P. 22860
+\item
+  Bren School of Environmental Science \& Management, University of
+  California Santa Barbara, Santa Barbara, CA
+\item
+  Instituto de Investigaciones Oceanológicas, Universidad Autónoma de
+  Baja California, Km. 103 Carretera Tijuana-Ensenada, Ensenada, Baja
+  California, México C.P. 22860
+\item
+  Scripps Institution of Oceanography, University of California San
+  Diego, La Jolla, CA, USA
+\end{enumerate}
+
+\textbf{Corresponding Author}
+
+Juan Carlos Villaseñor-Derbez, (+1) 207 205 8435,
+\href{mailto:jvillasenor@bren.ucsb.edu}{\nolinkurl{jvillasenor@bren.ucsb.edu}}
+
+\clearpage
+
+\section{Abstract}\label{abstract}
+
+\section{Key words}\label{key-words}
+
+\clearpage
+
+\section{Introduction}\label{introduction}
+
+\begin{itemize}
+\item
+  Tallas son usadas frecuentemente en ciencia pesquera
+\item
+  Tallas minimas de captura
+\item
+  Calcular biomasa
+\item
+  Modelos estructurados por tallas / edades
+\item
+  Tallas en ecologia
+\item
+  Estructura de tallas puede indicar zonas de reclutamiento,
+  agregaciones reproductivas
+\item
+  Determinar el estatus de establecimiento de una poblacion
+\item
+  Indicar diferencias en productividad (Jonno Wilson)
+\item
+  Size is a determinant of age and fecundity and egg quality
+\end{itemize}
+
+Kelp forests along the Eastern Pacific coast are seen as transboundary
+resources (Torres-Moye 2013), and are subject to different regulations
+on either side of the U.S. - Mexico border (Ramírez-Valdez et al. 2017).
+Furthermore, resources associated to kelp forests on Mexican coasts have
+received little attention when compared to their homologous across the
+border (Ramírez-Valdez et al. 2017).
+
+Thus, the only available information about size structures for fish
+populations comes from landing reports that do not necessarily reflect
+the composition and state of populations as the indicators (e.g.~size
+structure) may be biased by the interests of fisheries operating in each
+region (Essington et al., 2006). This lack of information impairs
+decision making and disables the implementation of correct management
+strategies.
+
+Given the importance of size structures of fish populations, we discribe
+size structures of the most abundant fish species along Baja California.
+
+\textbf{Specifically, we compared size structures, fish size, and
+proportion of potentially mature organisms of fish populations under
+different degrees of anthropogenic pressure. This study represents the
+first approach to comprehensively assess fish size-structures and
+densities along the Mexican kelp forests through visual censuses and
+that did not rely on landing data.}
+
+\section{Methods}\label{methods}
+
+\subsection{Area of study}\label{area-of-study}
+
+The present study took place in the kelp forests off the coasts of Baja
+California, Mexico (Fig. 1).
+
+Fishing has been recognized as one of the most important sources of
+pressure exerted on kelp forests (Shroeder \& Love, 2002; Coleman et
+al., 2003). For the area of study, an average sport-fishing trip may
+yield a catch of 19 organisms, equivalent to 54 Kg (Sosa-Nishizaki et
+al., 2013).
+
+Human population is unequally distributed along Baja California. The
+larger cities on the Pacific coast of the state (Tijuana and Ensenada)
+are located in the north, and there are vast unpopulated areas towards
+the south. Fishing pressure (commercial and artisanal) is
+heterogeneously distributed, with some major fishing grounds in front of
+the large cities, but also some important areas south, in small towns.
+Nevertheless, due to its proximity to the United States, and mainland
+Mexico, there is also a higher availability of sport fishing activities
+in the northern region, particularly in Ensenada and San Quintín
+(Sosa-Nishizaki et al., 2013). Thus, we believe that an uneven
+distribution of anthropogenic pressure exists in the Pacific coast of
+Baja California, where the densely populated northern regions induce a
+higher stress on the marine environment than small settlements in the
+southern part of the state.
+
+\includegraphics{Manuscript_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\includegraphics{Manuscript_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+\subsection{Sampling}\label{sampling}
+
+During October and November 2013 we visited 13 locations distributed
+along 291 Km of coastline off the Pacific coasts of Baja California,
+Mexico (Fig. 1, Table I). Trained scuba divers assessed fish communities
+through visual censuses along 30 × 2 m belt transects. On each transect,
+we registered species richness, abundances, and total lengths, in 5 cm
+intervals. We performed a total of 133 belt transects, accounting for a
+total surveyed area of 7,980 m\textsuperscript{2}. Individual divers
+were randomized between survey groups for each sampling event in order
+to reduce bias (Sandin et al., 2008).
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Location & Latitude & Longitude & Bottom & Midwater\\
+\midrule
+ASA & 29.73211 & -115.7756 & 6 & 5\\
+BMA & 32.01675 & -116.8831 & 6 & 5\\
+ERE & 31.28125 & -116.4037 & 6 & 6\\
+ERO & 29.90300 & -115.7762 & 5 & 1\\
+ISJE & 29.78662 & -115.7990 & 6 & 6\\
+\addlinespace
+ISJP & 29.78457 & -115.7898 & 6 & 6\\
+ISME & 30.49803 & -116.1191 & 6 & 6\\
+ISMP & 30.48050 & -116.1170 & 6 & 5\\
+ITSE & 31.79726 & -116.8000 & 6 & 6\\
+ITSP & 31.80850 & -116.7987 & 6 & 6\\
+\addlinespace
+RET & 31.60444 & -116.6729 & 6 & 6\\
+SMI & 31.91014 & -116.7581 & 6 & 6\\
+SSI & 31.98244 & -116.8427 & 6 & 6\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data analysis}\label{data-analysis}
+
+Id abundant species w IVB
+
+\includegraphics{Manuscript_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\[TL_{i,j} = \beta_{0i}Species_i + \beta_1 Latitude_j + \beta_2 Latitude_j \times Fished_i + \epsilon\]
+
+\[TL_{i,j} = \beta_{0i}Species_i + \beta_1 Latitude_j + \beta_2 Latitude_j \times Fished_i + \beta_3Kelp_j + \epsilon\]
+
+\[TL_{i,j} = \beta_{0i}Species_i + \beta_1 Latitude_j + \beta_2 Latitude_j \times Fished_i + \beta_3Habitat_j + \epsilon\]
+
+\[TL_{i,j} = \beta_{0i}Species_i + \beta_1 Latitude_j + \beta_2 Latitude_j \times Fished_i + \beta_3Temp_j + \epsilon\]
+
+\[TL_{i,j} = \beta_{0i}Species_i + \beta_1 Latitude_j + \beta_2 Latitude_j \times Fished_i + \beta_3Kelp_j + \beta_4Habitat_j + \beta_5Temp_j + \epsilon\]
+
+\begin{itemize}
+\item
+  \(i\) = Species
+\item
+  \(j\) = Transect?
+\end{itemize}
+
+\clearpage
+
+\section{Results}\label{results}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-10}Biological value index for 16 fish species along the Kelp Forests of Baja California. BVI = Biological Value Index, rBVI = Relative Biological Value Index, cBVI = Cummulative Biological Value Index.}
+\centering
+\begin{tabular}[t]{>{\em}lrrr}
+\toprule
+Species & BVI & rBVI & cBVI\\
+\midrule
+Oxyjulis californica & 190 & 12.02 & 12.02\\
+Chromis punctipinnis & 172 & 10.88 & 22.90\\
+Semicossyphus pulcher & 153 & 9.68 & 32.57\\
+Embiotoca jacksoni & 109 & 6.89 & 39.47\\
+Hypsypops rubicundus & 104 & 6.58 & 46.05\\
+\addlinespace
+Paralabrax clathratus & 94 & 5.95 & 51.99\\
+Rhacochilus vacca & 80 & 5.06 & 57.05\\
+Sebastes atrovirens & 72 & 4.55 & 61.61\\
+Hypsurus caryi & 62 & 3.92 & 65.53\\
+Brachyistius frenatus & 59 & 3.73 & 69.26\\
+\addlinespace
+Oxylebius pictus & 52 & 3.29 & 72.55\\
+Rhinogobiops nicholsii & 52 & 3.29 & 75.84\\
+Girella nigricans & 46 & 2.91 & 78.75\\
+Embiotoca lateralis & 35 & 2.21 & 80.96\\
+Sebastes serranoides & 31 & 1.96 & 82.92\\
+\addlinespace
+Others & 270 & 17.08 & 100.00\\
+Total & 1581 & 100.00 & NA\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}
+\centering
+\includegraphics{Manuscript_files/figure-latex/unnamed-chunk-11-1.pdf}
+\caption{Mean total length by transect as a function of latitude. Marker
+color indicates habitat (B = bottom, M = midwater), marker size
+indicates Kelp Density (Fronds / m2).}
+\end{figure}
+
+\begin{landscape}
+
+
+\begin{table}[!htbp] \centering 
+  \caption{} 
+  \label{} 
+\tiny 
+\begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+\\[-1.8ex] & \multicolumn{6}{c}{Length (cm)} \\ 
+ & Model 1 & Model 2 & Model 3 & Model 4 & Model5 & Model6 \\ 
+\hline \\[-1.8ex] 
+ C. punctipinnis & 32.562$^{***}$ (1.482) & 33.206$^{***}$ (1.497) & 29.665$^{***}$ (1.675) & 60.061$^{***}$ (5.615) & 71.227$^{***}$ (5.915) & 63.323$^{***}$ (5.846) \\ 
+  E. jacksoni & 44.461$^{***}$ (1.541) & 45.081$^{***}$ (1.554) & 41.311$^{***}$ (1.756) & 72.044$^{***}$ (5.631) & 83.089$^{***}$ (5.925) & 74.965$^{***}$ (5.851) \\ 
+  H. rubicundus & 116.228$^{***}$ (12.145) & 117.284$^{***}$ (12.200) & 116.178$^{***}$ (12.155) & 143.173$^{***}$ (13.377) & 83.653$^{***}$ (5.922) & 150.472$^{***}$ (13.475) \\ 
+  O. californica & 32.514$^{***}$ (1.509) & 33.167$^{***}$ (1.526) & 29.610$^{***}$ (1.703) & 60.079$^{***}$ (5.637) & 71.391$^{***}$ (5.938) & 63.352$^{***}$ (5.866) \\ 
+  P. clathratus & 119.770$^{***}$ (12.102) & 120.842$^{***}$ (12.159) & 119.841$^{***}$ (12.113) & 146.781$^{***}$ (13.365) & 88.126$^{***}$ (6.017) & 154.273$^{***}$ (13.461) \\ 
+  R. vacca & 44.946$^{***}$ (1.626) & 45.559$^{***}$ (1.637) & 41.844$^{***}$ (1.830) & 72.449$^{***}$ (5.647) & 83.542$^{***}$ (5.940) & 75.411$^{***}$ (5.868) \\ 
+  S. atrovirens & 117.849$^{***}$ (12.282) & 118.899$^{***}$ (12.336) & 117.885$^{***}$ (12.291) & 144.877$^{***}$ (13.519) & 84.567$^{***}$ (5.998) & 152.310$^{***}$ (13.623) \\ 
+  S. pulcher & 120.814$^{***}$ (12.086) & 121.891$^{***}$ (12.139) & 120.768$^{***}$ (12.096) & 147.779$^{***}$ (13.323) & 88.802$^{***}$ (5.952) & 155.102$^{***}$ (13.428) \\ 
+  Latitude & $-$0.788$^{***}$ (0.048) & $-$0.814$^{***}$ (0.049) & $-$0.687$^{***}$ (0.055) & $-$0.945$^{***}$ (0.057) & $-$1.141$^{***}$ (0.071) & $-$0.863$^{***}$ (0.059) \\ 
+  Kelp &  & 0.331$^{***}$ (0.124) &  &  & 0.180 (0.130) & 0.226$^{*}$ (0.127) \\ 
+  Habitat &  &  & $-$0.422$^{***}$ (0.094) &  & $-$0.376$^{***}$ (0.105) & $-$0.578$^{***}$ (0.100) \\ 
+  Temperature &  &  &  & $-$1.291$^{***}$ (0.255) & $-$1.576$^{***}$ (0.279) & $-$1.609$^{***}$ (0.280) \\ 
+  Latitude*Fished & $-$2.284$^{***}$ (0.392) & $-$2.299$^{***}$ (0.393) & $-$2.383$^{***}$ (0.393) & $-$2.266$^{***}$ (0.392) &  & $-$2.407$^{***}$ (0.394) \\ 
+ \hline \\[-1.8ex] 
+F & 6,496.3*** (df = 9; 14,688) & 5,879.6*** (df = 10; 14,687) & 5,882.0*** (df = 10; 14,687) & 5,866.6*** (df = 10; 14,687) & 5,409.8*** (df = 11; 14,686) & 4,967.0*** (df = 12; 14,685) \\ 
+AIC & 92,012.55 & 92,006.44 & 91,999.16 & 91,996.38 & 92,140.90 & 91,969.28 \\ 
+BIC & 92,096.10 & 92,097.59 & 92,090.31 & 92,087.52 & 92,239.64 & 92,075.61 \\ 
+Observations & 14,698 & 14,698 & 14,698 & 14,698 & 14,698 & 14,698 \\ 
+R$^{2}$ & 0.804 & 0.804 & 0.804 & 0.804 & 0.802 & 0.805 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{6}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+\end{landscape}
+
+\clearpage
+
+\section{Discusion and Conclusion}\label{discusion-and-conclusion}
+
+Removing organisms of specific sizes (\emph{i. e.} size-selective
+harvesting) is a common practice in marine and terrestrial ecosystems
+(Fenberg \& Roy, 2008). Commercial fisheries often focus their efforts
+on large--sized organisms within a same species which yields a greater
+revenue--effort ratio (Hepell et al., 2005; Hamilton et al., 2007).
+Trophy--fishing follows the same pattern; larger fish represent a
+greater challenge and thus produce more satisfaction when captured
+(Shroeder \& Love, 2002). Size--selective harvesting can also be
+market--driven when buyers have a preferred size, typically medium-sized
+or ``dish-sized'' fish that can be better allocated in the market (Reddy
+et al., 2013 / Aburto).
+
+Fishing pressure (especially when size-selective) can modify life
+histories of fishes (McBride et al., 2013). For example, Thompson \&
+Stokes (1996) demonstrated how different fishing methods targeting
+different sizes produced different size structures on Atlantic cod
+(\emph{Gadus morhua}) populations by non-randomly distributing
+mortality.
+
+\clearpage
+
+\section{References}\label{references}
+
+\hypertarget{refs}{}
+\hypertarget{ref-ramrezvaldez_2017-RH}{}
+Ramírez-Valdez, Arturo, Octavio Aburto-Oropeza, Arafeh D Nur, Rodrigo
+Beas-Luna, Jennifer E Caselle, Max C. N Castorani, Kyle Cavanaugh, et
+al. 2017. ``Mexico-California Bi-National Initiative of Kelp Forest
+Ecosystems and Fisheries.'' UC Office of the President: UC-Mexico
+Initiative. Oakland, CA: University of California; eScholarship
+University of California.
+\url{http://escholarship.org/uc/item/8sp8j4xs}.
+
+\hypertarget{ref-torresmoye_2013-mx}{}
+Torres-Moye, G. 2013. ``Benthic Community Structure in Kelp Forests from
+the Southern California Bight.'' \emph{Cienc Mar} 39 (3): 239--52.
+doi:\href{https://doi.org/10.7773/cm.v39i3.2250}{10.7773/cm.v39i3.2250}.
+
+\section{Other figures}\label{other-figures}
+
+\includegraphics{Manuscript_files/figure-latex/unnamed-chunk-15-1.pdf}
+
+\includegraphics{Manuscript_files/figure-latex/unnamed-chunk-16-1.pdf}
+
+\includegraphics{Manuscript_files/figure-latex/unnamed-chunk-17-1.pdf}
+
+
+\end{document}
