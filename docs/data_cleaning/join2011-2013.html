@@ -243,7 +243,8 @@ div.tocify {
          Level = ifelse(Level == &quot;Fondo&quot;, &quot;Bottom&quot;, &quot;Midwater&quot;),
          Site = ifelse(Site == &quot;Norte&quot;, &quot;N&quot;, &quot;S&quot;),
          Zone = ifelse(Zone == &quot;Expuesto&quot;, &quot;Exposed&quot;, Zone),
-         Zone = ifelse(Zone == &quot;Protegido&quot;, &quot;Protected&quot;, Zone))</code></pre>
+         Zone = ifelse(Zone == &quot;Protegido&quot;, &quot;Protected&quot;, Zone),
+         Year = ifelse(Location == &quot;ISB&quot;, 2012, Year))</code></pre>
 <pre class="r"><code>sp_list &lt;- unique(data$GenusSpecies)
 
 species_bio &lt;- MPAtools::species_bio %&gt;% 
@@ -274,22 +275,23 @@ data_final &lt;- data %&gt;%
          Order = ifelse(GenusSpecies == &quot;Sebastes spp&quot;, &quot;Scorpaeniformes&quot;, Order),
          Family = ifelse(GenusSpecies == &quot;Sebastes spp&quot;, &quot;Sebastidae&quot;, Family),
          Genus = ifelse(GenusSpecies == &quot;Sebastes spp&quot;, &quot;Sebastes&quot;, Genus)) %&gt;% 
+  dplyr::select(ID, Location, Site, Zone, Level, Latitude, Longitude, Transect, KelpDensity, GenusSpecies, TotalLength, Abundance, aTL2TW, bTL2TW, NT, Lm, Lmax, Lm, everything()) %&gt;% 
   janitor::clean_names()
 
 head(data_final)</code></pre>
 <pre><code>## # A tibble: 6 x 31
-##   record id             year latitude longitude location site  zone  level
-##    &lt;int&gt; &lt;chr&gt;         &lt;int&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
-## 1      1 2013-ASA-N-B~  2013     29.7      -116 ASA      N     &lt;NA&gt;  Bott~
-## 2      2 2013-ASA-N-B~  2013     29.7      -116 ASA      N     &lt;NA&gt;  Bott~
-## 3      3 2013-ASA-N-B~  2013     29.7      -116 ASA      N     &lt;NA&gt;  Bott~
-## 4      4 2013-ASA-N-B~  2013     29.7      -116 ASA      N     &lt;NA&gt;  Bott~
-## 5      5 2013-ASA-N-B~  2013     29.7      -116 ASA      N     &lt;NA&gt;  Bott~
-## 6      6 2013-ASA-N-B~  2013     29.7      -116 ASA      N     &lt;NA&gt;  Bott~
-## # ... with 22 more variables: transect &lt;int&gt;, class &lt;chr&gt;, order &lt;chr&gt;,
-## #   family &lt;chr&gt;, genus &lt;chr&gt;, genusspecies &lt;chr&gt;, totallength &lt;int&gt;,
-## #   abundance &lt;int&gt;, kelpabundance &lt;dbl&gt;, kelpdensity &lt;dbl&gt;, atl2tw &lt;dbl&gt;,
-## #   btl2tw &lt;dbl&gt;, nt &lt;dbl&gt;, lm &lt;dbl&gt;, lmax &lt;dbl&gt;, bodyshape &lt;chr&gt;,
+##   id    location site  zone  level latitude longitude transect kelpdensity
+##   &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;       &lt;dbl&gt;
+## 1 2013~ ASA      N     &lt;NA&gt;  Bott~     29.7      -116        1       0.500
+## 2 2013~ ASA      N     &lt;NA&gt;  Bott~     29.7      -116        1       0.500
+## 3 2013~ ASA      N     &lt;NA&gt;  Bott~     29.7      -116        1       0.500
+## 4 2013~ ASA      N     &lt;NA&gt;  Bott~     29.7      -116        1       0.500
+## 5 2013~ ASA      N     &lt;NA&gt;  Bott~     29.7      -116        1       0.500
+## 6 2013~ ASA      N     &lt;NA&gt;  Bott~     29.7      -116        1       0.500
+## # ... with 22 more variables: genusspecies &lt;chr&gt;, totallength &lt;int&gt;,
+## #   abundance &lt;int&gt;, atl2tw &lt;dbl&gt;, btl2tw &lt;dbl&gt;, nt &lt;dbl&gt;, lm &lt;dbl&gt;,
+## #   lmax &lt;dbl&gt;, record &lt;int&gt;, year &lt;dbl&gt;, class &lt;chr&gt;, order &lt;chr&gt;,
+## #   family &lt;chr&gt;, genus &lt;chr&gt;, kelpabundance &lt;dbl&gt;, bodyshape &lt;chr&gt;,
 ## #   demerspelag &lt;chr&gt;, pricecateg &lt;chr&gt;, usedasbait &lt;chr&gt;, aquarium &lt;chr&gt;,
 ## #   importance &lt;chr&gt;, comments &lt;chr&gt;</code></pre>
 <pre class="r"><code>write_csv(data_final, path = here(&quot;data&quot;,&quot;Peces_KelpForest_2011-2013.csv&quot;))</code></pre>
