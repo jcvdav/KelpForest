@@ -463,9 +463,9 @@ plotly::ggplotly(p1)
 
 ## Excluir localidades de Cedros en el análisis con densidades, pero incluir una perspectiva de análisis de presencia/ausencia con TODAS las localidades
 
-## Análisis de similitud
+## Análisis de similitud y nMDS
 
-Ahora hacemos un ANOSIM incluyendo las localidades de Cedros y San Benito, pero al haber identificado diferencia sen composicion, nos quedamos solamente con presencia / ausencia.
+Ahora hacemos un ANOSIM incluyendo las localidades de Cedros y San Benito, pero al haber identificado diferencia sen comp, nos quedamos solamente con presencia / ausencia.
 
 ```{r}
 anosim_c_cedros <- kelp %>% 
@@ -497,6 +497,13 @@ cbind(data_c_cedros_groups, scores(mds)) %>%
   scale_color_brewer(palette = "Paired") +
   annotate(geom = "text", x = 0, y = 0.5, label = stress)
 ```
+
+```{r}
+perm <- how(nperm = 999)
+
+adonis(data_c_cedros_samples ~ location, data = data_c_cedros_groups)
+```
+
 
 
 ## SIMPER e IVB
