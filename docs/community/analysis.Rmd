@@ -703,7 +703,9 @@ $$
 $$
 1 - \lambda = 1 - \sum_{i = 1}^Sp_i^2
 $$
-
+$$
+1 - \sum_{i = 1}^S\left(\frac{Ni \times (Ni - 1)}{N \times (N-1)}\right)
+$$
 
 ```{r}
 Stot <- kelp11 %>% 
@@ -822,9 +824,8 @@ L <- kelp11 %>%
   group_by(location, site, zone, level, transect) %>% 
   mutate(N = sum(ni)) %>%  
   ungroup() %>% 
-  mutate(pi = ni / N) %>% 
   group_by(location, site, zone, level, transect) %>%
-  summarize(Li = 1-sum(pi^2)) %>% 
+  summarize(Li = 1 - sum((ni * (ni - 1)) / (N * (N - 1)))) %>% 
   ungroup() %>% 
   group_by(location) %>% 
   summarize(L = mean(Li, na.rm = T),
