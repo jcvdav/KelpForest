@@ -708,6 +708,9 @@ $$
 $$
 
 ```{r}
+kelp11 <- kelp %>% 
+  filter(year < 2013)
+
 Stot <- kelp11 %>% 
   group_by(location, genusspecies) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
