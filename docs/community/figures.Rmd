@@ -317,7 +317,7 @@ loc_data <- kelp11 %>%
             longitude = mean(longitude)) %>% 
   ungroup()
 
-Stot %>% 
+ind_2011 <- Stot %>% 
   rbind(Stot_wo0) %>% 
   rbind(S_bar) %>% 
   rbind(S_bar_wo0) %>% 
@@ -330,7 +330,10 @@ Stot %>%
          Value = value,
          Indicator = indicator) %>% 
   transform(Location = reorder(Location, latitude)) %>% 
-  ggplot(aes(x = Location, y = Value)) +
+  mutate(year = 2011)
+  
+  
+ggplot(ind_2011, aes(x = Location, y = Value)) +
   geom_errorbar(aes(ymin = Value - sd, ymax = Value + sd, group = Indicator), width = 0.2, position = position_dodge(width = 0.5)) +
   geom_point(aes(fill = Indicator), size = 2, color = "black", position = position_dodge(width = 0.5), shape = 21) + 
   facet_wrap(~group, scales = "free", ncol = 3) +
@@ -682,7 +685,7 @@ Stot %>%
 
 ### Figura
 
-```{r, fig.width = 6, fig.height = 10}
+```{r, fig.width = 6, fig.height = 8}
 Stot <- kelp13 %>% 
   group_by(location, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
@@ -817,7 +820,7 @@ loc_data <- kelp13 %>%
             longitude = mean(longitude)) %>% 
   ungroup()
 
-Stot %>% 
+ind_2013 <- Stot %>% 
   rbind(Stot_wo0) %>% 
   rbind(S_bar) %>% 
   rbind(S_bar_wo0) %>% 
@@ -829,17 +832,23 @@ Stot %>%
   rename(Location = location,
          Value = value,
          Indicator = indicator) %>% 
-  transform(Location = reorder(Location, latitude)) %>% 
-  ggplot(aes(x = Location, y = Value)) +
-  geom_errorbar(aes(ymin = Value - sd, ymax = Value + sd, group = Indicator), width = 0.2, position = position_dodge(width = 0.5)) +
-  geom_point(aes(fill = Indicator), size = 2, color = "black", position = position_dodge(width = 0.5), shape = 21) + 
+  transform(Location = reorder(Location, latitude)) %>%
+  mutate(year = 2013) %>% 
+  rbind(ind_2011) %>% 
+  mutate(year = as.character(year)) %>% 
+  filter(Location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"))
+
+
+ggplot(ind_2013, aes(x = Location, y = Value, shape = year)) +
+  geom_errorbar(aes(ymin = Value - sd, ymax = Value + sd, group = paste(Indicator, year)), width = 0.2, position = position_dodge(width = 0.5)) +
+  geom_point(aes(color = Indicator), size = 2, position = position_dodge(width = 0.5)) + 
   facet_wrap(~group, scales = "free", ncol = 3) +
   coord_flip() +
   theme(strip.background = element_blank(),
         legend.justification = c(0, 0),
-        legend.position = c(0.75, 0.25),
+        legend.position = c(0.75, 0),
         axis.text = element_text(size = 8)) +
-  scale_fill_viridis_d()
+  scale_color_viridis_d()
 ```
 
 
