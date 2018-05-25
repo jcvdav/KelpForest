@@ -1,0 +1,618 @@
+---
+title: "Figuras y tablas finales"
+author: "Juan Carlos Villaseñor-Derbez"
+date: "24 de mayo de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+```
+
+```{r}
+suppressPackageStartupMessages({
+  library(vegan)
+  library(here)
+  library(magrittr)
+  library(cowplot)
+  library(sf)
+  library(tmap)
+  library(tidyverse)
+})
+```
+
+```{r}
+kelp <- read.csv(here("data", "Peces_KelpForest_2011-2013.csv"),
+                 stringsAsFactors = F)
+```
+
+# 2011
+
+```{r}
+kelp11 <- kelp %>% 
+  filter(year < 2013)
+```
+
+
+## Índices ecológicos
+
+### Tabla
+
+```{r}
+Stot <- kelp11 %>% 
+  group_by(location, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>% 
+  group_by(location) %>% 
+  summarize(S = n()) %>% 
+  select(location, Stot = S)
+
+Stot_wo0 <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>% 
+  group_by(location) %>% 
+  summarize(S = n()) %>% 
+  select(location, Stot_wo0 = S)
+
+S_bar <- kelp11 %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>%
+  group_by(location, site, zone, level, transect) %>% 
+  count() %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(S = mean(nn, na.rm = T),
+            sd = sd(nn, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(S = formatC(S, digits = 2, format = "f"),
+         sd = formatC(sd, digits = 2, format = "f"),
+         S = paste(S, "$\\pm$", sd)) %>% 
+  select(location, S_bar = S)
+
+S_bar_wo0 <- kelp11 %>% 
+  filter(transect > 0) %>%
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>%
+  group_by(location, site, zone, level, transect) %>% 
+  count() %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(S = mean(nn, na.rm = T),
+            sd = sd(nn, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(S = formatC(S, digits = 2, format = "f"),
+         sd = formatC(sd, digits = 2, format = "f"),
+         S = paste(S, "$\\pm$", sd)) %>% 
+  select(location, S_bar_wo0 = S)
+
+D <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  group_by(location) %>% 
+  summarize(D = mean(n, na.rm = T),
+            sd = sd(n, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(D = formatC(D, digits = 2, format = "f"),
+         sd = formatC(sd, digits = 2, format = "f"),
+         D = paste(D, "$\\pm$", sd)) %>% 
+  select(location, D)
+
+H <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(ni = sum(abundance, na.rm = T)) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  mutate(N = sum(ni, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(pi = ni / N) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  summarize(Hi = -1 * sum(pi * log(pi))) %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(H = mean(Hi, na.rm = T),
+            sd = sd(Hi, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(H = formatC(H, digits = 2, format = "f"),
+         sd = formatC(sd, digits = 2, format = "f"),
+         H = paste(H, "$\\pm$", sd)) %>% 
+  select(location, H)
+
+J <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(ni = sum(abundance, na.rm = T)) %>% 
+  filter(ni > 0) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  mutate(S = n(),
+         N = sum(ni)) %>%  
+  ungroup() %>% 
+  mutate(pi = ni / N) %>% 
+  group_by(location, site, zone, level, transect, S) %>% 
+  summarize(Hi = -1 * sum(pi * log(pi))) %>% 
+  ungroup() %>% 
+  mutate(Ji = Hi / log(S)) %>% 
+  filter(!is.nan(Ji)) %>% 
+  group_by(location) %>% 
+  summarize(J = mean(Ji, na.rm = T),
+            sd = sd(Ji, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(J = formatC(J, digits = 2, format = "f"),
+         sd = ifelse(is.na(sd), 0, sd),
+         sd = formatC(sd, digits = 2, format = "f"),
+         J = paste(J, "$\\pm$", sd)) %>% 
+  select(location, J)
+
+L <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(ni = sum(abundance, na.rm = T)) %>% 
+  filter(ni > 0) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  mutate(N = sum(ni)) %>%  
+  ungroup() %>% 
+  group_by(location, site, zone, level, transect) %>%
+  summarize(Li = 1 - sum((ni * (ni - 1)) / (N * (N - 1)))) %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(L = mean(Li, na.rm = T),
+            sd = sd(Li, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(L = formatC(L, digits = 2, format = "f"),
+         sd = formatC(sd, digits = 2, format = "f"),
+         L = paste(L, "$\\pm$", sd)) %>% 
+  select(location, L)
+
+
+Stot %>% 
+  left_join(Stot_wo0, by = "location") %>% 
+  left_join(S_bar, by = "location") %>% 
+  left_join(S_bar_wo0, by = "location") %>% 
+  left_join(D, by = "location") %>% 
+  left_join(H, by = "location") %>% 
+  left_join(J, by = "location") %>% 
+  left_join(L, by = "location") %>% 
+  knitr::kable(escape = F,
+               col.names = c("Location", "S0", "S", "$\\bar{S0}$", "$\\bar{S}$", "D", "H'", "J'", "$1 - \\lambda$"))
+```
+
+### Figura
+
+```{r, fig.width = 6, fig.height = 10}
+Stot <- kelp11 %>% 
+  group_by(location, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>% 
+  group_by(location) %>% 
+  summarize(S = n()) %>% 
+  select(location, value = S) %>% 
+  mutate(sd = 0) %>% 
+  mutate(indicator = "Stot",
+         group = "     ")
+
+Stot_wo0 <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>% 
+  group_by(location) %>% 
+  summarize(S = n()) %>% 
+  select(location, value = S) %>% 
+  mutate(sd = 0) %>% 
+  mutate(indicator = "Stot_wo0",
+         group = "     ")
+
+S_bar <- kelp11 %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>%
+  group_by(location, site, zone, level, transect) %>% 
+  count() %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(S = mean(nn, na.rm = T),
+            sd = sd(nn, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(location, value = S, sd) %>% 
+  mutate(indicator = "Sbar",
+         group = "  ")
+
+S_bar_wo0 <- kelp11 %>% 
+  filter(transect > 0) %>%
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  filter(n > 0) %>%
+  group_by(location, site, zone, level, transect) %>% 
+  count() %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(S = mean(nn, na.rm = T),
+            sd = sd(nn, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(location, value = S, sd) %>% 
+  mutate(indicator = "Sbar_wo0",
+         group = "  ")
+
+D <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  summarize(n = sum(abundance, na.rm = T)) %>% 
+  group_by(location) %>% 
+  summarize(D = mean(n, na.rm = T),
+            sd = sd(n, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(location, value = D, sd) %>% 
+  mutate(indicator = "D",
+         group = "   ")
+
+H <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(ni = sum(abundance, na.rm = T)) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  mutate(N = sum(ni, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(pi = ni / N) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  summarize(Hi = -1 * sum(pi * log(pi))) %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(H = mean(Hi, na.rm = T),
+            sd = sd(Hi, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(location, value = H, sd) %>% 
+  mutate(indicator = "H'",
+         group = "    ")
+
+J <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(ni = sum(abundance, na.rm = T)) %>% 
+  filter(ni > 0) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  mutate(S = n(),
+         N = sum(ni)) %>%  
+  ungroup() %>% 
+  mutate(pi = ni / N) %>% 
+  group_by(location, site, zone, level, transect, S) %>% 
+  summarize(Hi = -1 * sum(pi * log(pi))) %>% 
+  ungroup() %>% 
+  mutate(Ji = Hi / log(S)) %>% 
+  filter(!is.nan(Ji)) %>% 
+  group_by(location) %>% 
+  summarize(J = mean(Ji, na.rm = T),
+            sd = sd(Ji, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(sd = ifelse(is.na(sd), 0, sd)) %>% 
+  select(location, value = J, sd) %>% 
+  mutate(indicator = "J",
+         group = " ")
+
+L <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
+  summarize(ni = sum(abundance, na.rm = T)) %>% 
+  filter(ni > 0) %>% 
+  group_by(location, site, zone, level, transect) %>% 
+  mutate(N = sum(ni)) %>%  
+  ungroup() %>% 
+  group_by(location, site, zone, level, transect) %>%
+  summarize(Li = 1 - sum((ni * (ni - 1)) / (N * (N - 1)))) %>% 
+  ungroup() %>% 
+  group_by(location) %>% 
+  summarize(L = mean(Li, na.rm = T),
+            sd = sd(Li, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(location, value = L, sd) %>% 
+  mutate(indicator = "lambda",
+         group = " ")
+
+loc_data <- kelp11 %>% 
+  group_by(location) %>% 
+  summarize(latitude = mean(latitude),
+            longitude = mean(longitude)) %>% 
+  ungroup()
+
+Stot %>% 
+  rbind(Stot_wo0) %>% 
+  rbind(S_bar) %>% 
+  rbind(S_bar_wo0) %>% 
+  rbind(D) %>%
+  rbind(H) %>% 
+  rbind(J) %>% 
+  rbind(L) %>% 
+  left_join(loc_data, by = "location") %>% 
+  rename(Location = location,
+         Value = value,
+         Indicator = indicator) %>% 
+  transform(Location = reorder(Location, latitude)) %>% 
+  ggplot(aes(x = Location, y = Value)) +
+  geom_errorbar(aes(ymin = Value - sd, ymax = Value + sd, group = Indicator), width = 0.2, position = position_dodge(width = 0.5)) +
+  geom_point(aes(fill = Indicator), size = 2, color = "black", position = position_dodge(width = 0.5), shape = 21) + 
+  facet_wrap(~group, scales = "free", ncol = 3) +
+  coord_flip() +
+  theme(strip.background = element_blank(),
+        legend.justification = c(0, 0),
+        legend.position = c(0.75, 0.25),
+        axis.text = element_text(size = 8)) +
+  scale_fill_viridis_d()
+```
+
+
+## nMDS
+
+```{r, fig.height = 10, fig.width = 10}
+data_test2 <- kelp11 %>% 
+  filter(transect > 0) %>% #,
+  group_by(location, site, level, transect, genus_species) %>% 
+  summarize(abundance = sum(abundance)) %>% 
+  ungroup() %>% 
+  mutate(abundance = sqrt(abundance)) %>% 
+  spread(genus_species, abundance, fill = 0)
+
+data_test2_groups <- data_test2 %>% 
+  select(location, site, level) %>% 
+  mutate(loc_site = paste(location, site, sep = "-"))
+
+data_test2_samples <- data_test2 %>% 
+  select(-c(location, site, level)) %>% 
+  vegdist(method = "bray")
+
+set.seed(43)
+mds <- metaMDS(data_test2_samples, trace = F)
+
+stress <- paste("2D Stress =", formatC(mds$grstress, digits = 4, format = "f"))
+
+p1 <- cbind(data_test2_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, sitio = site)) +
+  geom_point(size = 4, aes(fill = location), shape = 21, alpha = 0.8, color = "black") +
+  coord_equal() +
+  scale_fill_viridis_d() +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress)
+
+p2 <- cbind(data_test2_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, sitio = site)) +
+  geom_point(size = 4, aes(fill = level, shape = level), alpha = 0.8) +
+  coord_equal() +
+  scale_fill_brewer(palette = "Paired") +
+  scale_shape_manual(values = c(21, 24)) +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress)
+
+p3 <- cbind(data_test2_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, sitio = site)) +
+  geom_point(size = 4, aes(fill = location, shape = site), alpha = 0.8) +
+  coord_equal() +
+  scale_fill_viridis_d(guide = F) +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress)+
+  scale_shape_manual(values = c(21, 24))
+
+p4 <- cbind(data_test2_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, sitio = site)) +
+  geom_point(size = 4, aes(fill = site, shape = site), alpha = 0.8, color = "black") +
+  coord_equal() +
+  scale_fill_brewer(palette = "Paired") +
+  scale_shape_manual(values = c(21, 24)) +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress)
+
+plot_grid(p1, p2, p3, p4, ncol = 2, labels = "AUTO")
+
+```
+
+## IVB
+
+```{r}
+source('~/GitHub/bvi/bvi.R')
+source('~/GitHub/bvi/bvi_plot.R')
+source('~/GitHub/bvi/bvi_col.R')
+source('~/GitHub/bvi/bvi_boxplot.R')
+```
+
+```{r}
+
+bvi_results <- filter(kelp, transect > 0) %>%
+  filter(year < 2013) %>%  #,
+         # !location %in% localidades_excluidas) %>% 
+  group_by(location, site, level, transect, genus_species) %>%
+  summarize(n = sum(abundance)) %>%
+  spread(location, n, fill = 0) %>%
+  gather(location, n,-c(site, level, transect, genus_species)) %>%
+  group_by(location, genus_species) %>%
+  summarize(n = mean(n)) %>%
+  ungroup() %>% 
+  select(location, genus_species, n) %>%
+  spread(location, n) %>%
+  rename(Spp = genus_species) %>% 
+  bvi(sum = F, others = T, p = 0.8)
+
+knitr::kable(bvi_results)
+```
+
+```{r}
+bvi_results %>% 
+  select(-c(BVI, rBVI)) %>%
+  gather(Sample, Score, -c(Spp)) %>% 
+  ungroup() %>% 
+  group_by(Sample) %>% 
+  mutate(Total = sum(Score)) %>% 
+  ungroup() %>% 
+  mutate(Score_p = Score / Total * 100) %>% 
+  transform(Spp = reorder(Spp, Score)) %>% 
+  ggplot(aes(x = Spp, y = Score)) +
+  geom_boxplot(outlier.shape = NULL,
+               outlier.alpha = 0,
+               fill = "gray",
+               alpha = 0.5) +
+  geom_point(color = "black", size = 2, alpha = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(x = "Spp", y = "Score") +
+  scale_fill_brewer(palette = "Paired")
+```
+
+
+```{r, fig.width = 8, fig.height = 4.5}
+bvi_results %>% 
+  select(-c(BVI, rBVI)) %>%
+  gather(Sample, Score, -c(Spp)) %>% 
+  ungroup() %>% 
+  group_by(Sample) %>% 
+  mutate(Total = sum(Score)) %>% 
+  ungroup() %>% 
+  mutate(Score_p = Score / Total * 100) %>% 
+  left_join(loc_data, by = c("Sample" =  "location")) %>%
+  transform(Sample = reorder(Sample, -latitude)) %>%
+  mutate(Spp = fct_relevel(Spp, "Others")) %>% 
+  select(Sample, Score_p, Spp) %>% 
+  ggplot(aes(x = Sample, y = Score_p, fill = Spp)) +
+  geom_col(color = "black") +
+  scale_fill_viridis_d(name = "Species") +
+  labs(x = "Location", y = "BVI") +
+  ggExtra::rotateTextX()
+```
+
+## SIMPER
+
+```{r}
+simper_data <- filter(kelp, transect > 0) %>%
+  filter(year < 2013) %>% #,
+         # !location %in% localidades_excluidas) %>% 
+  group_by(location, site, level, transect, genus_species) %>%
+  summarize(n = sum(abundance)) %>%
+  ungroup() %>% 
+  mutate(n = sqrt(n)) %>% 
+  spread(genus_species, n, fill = 0)
+
+
+comm <- simper_data %>% 
+  select(-c(location, site, level, transect)) %>% 
+  as.matrix()
+
+sim <- simper(comm = comm,
+              group = simper_data$location,
+              permutations = 999,
+              parallel = 3)
+
+cusums <- tibble(species = sim$ASA_BMA$species) %>% 
+  cbind(map_df(sim, "cusum")) %>% 
+  gather(pair, cumsum, -species)
+
+overall <- map_df(sim, "overall") %>% 
+  gather(pair, overall)
+
+tibble(species = sim$ASA_BMA$species) %>% 
+  cbind(map_df(sim, "average")) %>% 
+  gather(pair, average, -species) %>%
+  left_join(cusums, by = c("species", "pair")) %>% 
+  left_join(overall, by = "pair") %>% 
+  filter(cumsum <= 0.95) %>%
+  transform(species = reorder(species, average)) %>% 
+  mutate(pair = str_replace(pair, "_", " vs. "),
+         average = average / overall) %>% 
+  ggplot(aes(x = species, y = average)) +
+  geom_boxplot(outlier.shape = NULL,
+               outlier.alpha = 0,
+               fill = "gray",
+               alpha = 0.5) +
+  geom_point(aes(fill = pair),
+             pch = 21,
+             color = "black",
+             size = 1) +
+  theme_bw() +
+  coord_flip() +
+  labs(x = "Spp", y = "Avg % disim") +
+  theme(legend.position = "none") +
+  scale_fill_viridis_d()
+```
+
+
+## Comparando 2011 - 2013
+
+```{r, fig.height = 8.5, fig.width = 12}
+anosim_c_cedros <- kelp %>% 
+  filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI")) %>% 
+  group_by(year, location, site, level, transect, genus_species) %>% 
+  summarize(abundance = sum(abundance)) %>% 
+  ungroup() %>% 
+  group_by(year, location, site, level, genus_species) %>% 
+  summarize(abundance = mean(abundance)) %>%
+  ungroup() %>% 
+  mutate(abundance = sqrt(abundance)) %>% 
+  spread(genus_species, abundance, fill = 0)
+
+data_c_cedros_groups <- anosim_c_cedros %>% 
+  select(year, location, site, level) %>% 
+  mutate(loc_site = paste(location, site, sep = "-"))
+
+data_c_cedros_samples <- anosim_c_cedros %>% 
+  select(-c(year, location, site, level)) %>% 
+  vegdist(method = "bray")
+
+set.seed(43)
+mds <- metaMDS(data_c_cedros_samples, trace = F)
+
+stress <- paste("2D Stress =", formatC(mds$grstress, digits = 4, format = "f"))
+
+p1 <- cbind(data_c_cedros_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_point(aes(shape = level, fill = location), size = 4) +
+  coord_equal() +
+  scale_fill_brewer(palette = "Paired") +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress) +
+  scale_shape_manual(values = c(21, 24))
+
+p2 <- cbind(data_c_cedros_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_line(aes(group = paste(location, site, level))) +
+  geom_point(aes(shape = paste(year, level), fill = location), color = "black", size = 4) +
+  coord_equal() +
+  scale_fill_brewer(palette = "Paired") +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress) +
+  scale_shape_manual(values = c(21:24))
+
+
+# Reciclamos el codigo y lo hacemos ahora por presencia / ausencia
+anosim_c_cedros <- kelp %>% 
+  filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI")) %>% 
+  group_by(year, location, site, level, genus_species) %>% 
+  summarize(abundance = sum(abundance)) %>% 
+  ungroup() %>% 
+  mutate(abundance = 1) %>% 
+  spread(genus_species, abundance, fill = 0)
+
+data_c_cedros_groups <- anosim_c_cedros %>% 
+  select(year, location, site, level) %>% 
+  mutate(loc_site = paste(location, site, sep = "-"))
+
+data_c_cedros_samples <- anosim_c_cedros %>% 
+  select(-c(year, location, site, level)) %>% 
+  vegdist(method = "bray")
+
+set.seed(43)
+mds <- metaMDS(data_c_cedros_samples, trace = F)
+
+stress <- paste("2D Stress =", formatC(mds$grstress, digits = 4, format = "f"))
+
+p3 <- cbind(data_c_cedros_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_point(aes(shape = level, fill = location), size = 4) +
+  coord_equal() +
+  scale_fill_brewer(palette = "Paired") +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress) +
+  scale_shape_manual(values = c(21, 24))
+
+p4 <- cbind(data_c_cedros_groups, scores(mds)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_line(aes(group = paste(location, site, level))) +
+  geom_point(aes(shape = paste(year, level), fill = location), color = "black", size = 4) +
+  coord_equal() +
+  scale_fill_brewer(palette = "Paired") +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress) +
+  scale_shape_manual(values = c(21:24))
+
+plot_grid(p1, p2, p3, p4, labels = "AUTO", ncol = 2)
+```
+

@@ -31,7 +31,7 @@ kelp <- read.csv(here("data", "Peces_KelpForest_2011-2013.csv"),
                  stringsAsFactors = F)
 
 kelp11 <- kelp %>% 
-  filter(year == 2011)
+  filter(year < 2013)
 ```
 
 
@@ -61,16 +61,13 @@ Todas las matrices de distancias son calculadas por distancia de Bray-Curtis.
 Necesitamos una matriz de presencia / ausencia por especie para correr el ANOSIM entre F y MA
 
 ```{r}
-localidades_excluidas <- c("CLO", "COL", "ERE", "VTR", "CKE", "PCH")
-localidades_excluidas <- c("")
 
 data_test1 <- kelp11 %>% 
-  # filter(!location %in% localidades_excluidas) %>% 
-  group_by(location, site, level, latitude, longitude, genusspecies) %>% 
+  group_by(location, site, level, latitude, longitude, genus_species) %>% 
   summarize(abundance = sum(abundance, na.rm = T)) %>% 
   ungroup() %>% 
   mutate(abundance = 1) %>% 
-  spread(genusspecies, abundance, fill = 0)
+  spread(genus_species, abundance, fill = 0)
 
 data_test1_groups <- data_test1 %>% 
   select(location, site, level) %>% 
@@ -98,7 +95,7 @@ perm <- how(nperm = 999)
 setBlocks(perm) <- data_test1_groups$loc_site
 
 set.seed(43)
-adonis(formula = data_test1_samples ~ level, data = data_test1_groups, permutations = perm)
+ad1 <- adonis(formula = data_test1_samples ~ level, data = data_test1_groups, permutations = perm)
 ```
 
 #### Anidando localidad
@@ -109,7 +106,7 @@ La comparacion similar anidando a nivel de localidad (ignorando las diferencias 
 setBlocks(perm) <- data_test1_groups$location
 
 set.seed(43)
-(test1a <- adonis(formula = data_test1_samples ~ level, data = data_test1_groups, permutations = perm))
+ad2 <- adonis(formula = data_test1_samples ~ level, data = data_test1_groups, permutations = perm)
 ```
 
 
@@ -119,7 +116,7 @@ Sin embargo, podemos correr tambien la comparacion de todos los fondos contra to
 
 ```{r}
 set.seed(43)
-adonis(formula = data_test1_samples ~ level, data = data_test1_groups)
+ad3 <- adonis(formula = data_test1_samples ~ level, data = data_test1_groups)
 ```
 
 
@@ -131,7 +128,7 @@ Ahora debenos comparar entre sitios, anidando a nivel de localidad. Es decir, co
 setBlocks(perm) <- data_test1_groups$location
 
 set.seed(43)
-adonis(formula = data_test1_samples ~ site, data = data_test1_groups, permutations = perm)
+ad4 <- adonis(formula = data_test1_samples ~ site, data = data_test1_groups, permutations = perm)
 ```
 
 ### ANOSIM entre localidades
@@ -140,7 +137,7 @@ Finalmente, comparamos entre localidades. En este caso no hay anidacion, pues la
 
 ```{r}
 set.seed(43)
-adonis(formula = data_test1_samples ~ location, data = data_test1_groups)
+ad5 <- adonis(formula = data_test1_samples ~ location, data = data_test1_groups)
 ```
 
 ## Comparación de densidades promediadas
@@ -150,14 +147,14 @@ Necesitamos obtener la densidad promedio de cada especie a nivel de localidad - 
 ```{r}
 data_test2 <- kelp11 %>% 
   filter(transect > 0) %>%
-  group_by(location, site, level, transect, genusspecies) %>% 
+  group_by(location, site, level, transect, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   ungroup() %>% 
-  group_by(location, site, level, transect, genusspecies) %>%
+  group_by(location, site, level, transect, genus_species) %>%
   summarize(abundance = mean(abundance, na.rm = T)) %>%
   ungroup() %>%
   mutate(abundance = sqrt(abundance)) %>% 
-  spread(genusspecies, abundance, fill = 0)
+  spread(genus_species, abundance, fill = 0)
 
 data_test2_groups <- data_test2 %>% 
   select(location, site, level) %>% 
@@ -176,11 +173,11 @@ Podemos corroborar haciendo un nMDS con todos los transectos (sin promediar). En
 data_test2 <- kelp11 %>% 
   filter(transect > 0) %>% #,
          # !location %in% localidades_excluidas) %>% 
-  group_by(location, site, level, transect, genusspecies) %>% 
+  group_by(location, site, level, transect, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   ungroup() %>% 
   mutate(abundance = sqrt(abundance)) %>% 
-  spread(genusspecies, abundance, fill = 0)
+  spread(genus_species, abundance, fill = 0)
 
 data_test2_groups <- data_test2 %>% 
   select(location, site, level) %>% 
@@ -228,6 +225,8 @@ p4 <- cbind(data_test2_groups, scores(mds)) %>%
 plot_grid(p1, p2, p3, p4, ncol = 2, labels = "AUTO")
 
 ```
+
+Cambiar C a color por sitios y marcador por norte y sur para comparar diferencias between y within mantos
 
 ```{r, fig.asp=1, eval = F}
 data_test2_groups %>%
@@ -323,18 +322,18 @@ site_data <- kelp %>%
   tally()
 
 bvi_results <- filter(kelp, transect > 0) %>%
-  filter(year == 2011) %>%  #,
+  filter(year < 2013) %>%  #,
          # !location %in% localidades_excluidas) %>% 
-  group_by(location, site, level, transect, genusspecies) %>%
+  group_by(location, site, level, transect, genus_species) %>%
   summarize(n = sum(abundance)) %>%
   spread(location, n, fill = 0) %>%
-  gather(location, n,-c(site, level, transect, genusspecies)) %>%
-  group_by(location, genusspecies) %>%
+  gather(location, n,-c(site, level, transect, genus_species)) %>%
+  group_by(location, genus_species) %>%
   summarize(n = mean(n)) %>%
   ungroup() %>% 
-  select(location, genusspecies, n) %>%
+  select(location, genus_species, n) %>%
   spread(location, n) %>%
-  rename(Spp = genusspecies) %>% 
+  rename(Spp = genus_species) %>% 
   bvi(sum = F, others = T)
 
 knitr::kable(bvi_results)
@@ -348,19 +347,21 @@ Cada punto es el "score" de la especie para cada localidad (tabla de arriba).
 
 ```{r}
 bvi_results %>% 
-    select(-c(BVI, rBVI)) %>%
-    gather(Sample, Score, -1) %>% 
-    set_colnames(value = c("Spp", "Sample", "Score")) %>% 
-    transform(Spp = reorder(Spp, Score)) %>% 
-    ggplot(aes(x = Spp, y = Score)) +
-    geom_boxplot(outlier.shape = NULL,
-                 outlier.alpha = 0,
-                 fill = "gray",
-                 alpha = 0.5) +
-    geom_point(aes(fill = Sample), pch = 21, color = "black", size = 2) +
-    theme_bw() +
-    coord_flip() +
-    labs(x = "Spp", y = "Score") +
+  select(-c(BVI, rBVI)) %>%
+  gather(Sample, Score, -1) %>% 
+  set_colnames(value = c("Spp", "Sample", "Score")) %>% 
+  filter(!Spp == "Others") %>% 
+  filter(Score > 0) %>% 
+  transform(Spp = reorder(Spp, Score)) %>% 
+  ggplot(aes(x = Spp, y = Score)) +
+  geom_boxplot(outlier.shape = NULL,
+               outlier.alpha = 0,
+               fill = "gray",
+               alpha = 0.5) +
+  geom_point(color = "black", size = 2, alpha = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(x = "Spp", y = "Score") +
   scale_fill_brewer(palette = "Paired")
 ```
 
@@ -408,6 +409,9 @@ bvi_results %>%
   labs(x = "Location", y = "Score")
 ```
 
+Hacer esta gráfica pero con densidades en el eje y. Las comunidades cambian porque las especies aparecen y desaparecen. Despues de esta metemos los IBVs
+
+
 
 ## SIMPER
 
@@ -416,13 +420,13 @@ Ahora hacemos el SIMPER con una aproximacion similar. En este caso, las densidad
 ```{r}
 
 simper_data <- filter(kelp, transect > 0) %>%
-  filter(year == 2011) %>% #,
+  filter(year < 2013) %>% #,
          # !location %in% localidades_excluidas) %>% 
-  group_by(location, site, level, transect, genusspecies) %>%
+  group_by(location, site, level, transect, genus_species) %>%
   summarize(n = sum(abundance)) %>%
   ungroup() %>% 
   mutate(n = sqrt(n)) %>% 
-  spread(genusspecies, n, fill = 0)
+  spread(genus_species, n, fill = 0)
 
 
 comm <- simper_data %>% 
@@ -441,7 +445,7 @@ cusums <- tibble(species = sim$ASA_BMA$species) %>%
 overall <- map_df(sim, "overall") %>% 
   gather(pair, overall)
 
-p1 <- tibble(species = sim$ASA_BMA$species) %>% 
+tibble(species = sim$ASA_BMA$species) %>% 
   cbind(map_df(sim, "average")) %>% 
   gather(pair, average, -species) %>%
   left_join(cusums, by = c("species", "pair")) %>% 
@@ -461,9 +465,8 @@ p1 <- tibble(species = sim$ASA_BMA$species) %>%
              size = 2) +
   theme_bw() +
   coord_flip() +
-  labs(x = "Spp", y = "Avg % disim")
-
-p1
+  labs(x = "Spp", y = "Avg % disim") +
+  theme(legend.position = "none") 
 ```
 
 ## Excluir localidades de Cedros en el análisis con densidades, pero incluir una perspectiva de análisis de presencia/ausencia con TODAS las localidades
@@ -476,11 +479,11 @@ Ahora hacemos un ANOSIM incluyendo las localidades de Cedros y San Benito, pero 
 anosim_c_cedros <- kelp %>% 
   filter(year < 2013) %>% #,
          # !location %in% localidades_excluidas) %>% 
-  group_by(location, site, level, transect, genusspecies) %>% 
+  group_by(location, site, level, transect, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   mutate(abundance = 1) %>% 
   ungroup() %>% 
-  spread(genusspecies, abundance, fill = 0)
+  spread(genus_species, abundance, fill = 0)
 
 data_c_cedros_groups <- anosim_c_cedros %>% 
   select(location, site, level) %>% 
@@ -528,14 +531,14 @@ Hacemos un nMDS comparandoo a nivel de año - localidad - sitio - nivel. En la p
 ```{r, fig.height = 8.5, fig.width = 12}
 anosim_c_cedros <- kelp %>% 
   filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI")) %>% 
-  group_by(year, location, site, level, transect, genusspecies) %>% 
+  group_by(year, location, site, level, transect, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   ungroup() %>% 
-  group_by(year, location, site, level, genusspecies) %>% 
+  group_by(year, location, site, level, genus_species) %>% 
   summarize(abundance = mean(abundance)) %>%
   ungroup() %>% 
   mutate(abundance = sqrt(abundance)) %>% 
-  spread(genusspecies, abundance, fill = 0)
+  spread(genus_species, abundance, fill = 0)
 
 data_c_cedros_groups <- anosim_c_cedros %>% 
   select(year, location, site, level) %>% 
@@ -571,11 +574,11 @@ p2 <- cbind(data_c_cedros_groups, scores(mds)) %>%
 # Reciclamos el codigo y lo hacemos ahora por presencia / ausencia
 anosim_c_cedros <- kelp %>% 
   filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI")) %>% 
-  group_by(year, location, site, level, genusspecies) %>% 
+  group_by(year, location, site, level, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   ungroup() %>% 
   mutate(abundance = 1) %>% 
-  spread(genusspecies, abundance, fill = 0)
+  spread(genus_species, abundance, fill = 0)
 
 data_c_cedros_groups <- anosim_c_cedros %>% 
   select(year, location, site, level) %>% 
@@ -618,11 +621,11 @@ El ANOSIM lo hacemos con densidades promediadas y transformadas por raiz cuadrad
 anosim_c_cedros <- kelp %>% 
   filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
          transect > 0) %>% 
-  group_by(year, location, site, level, transect, genusspecies) %>% 
+  group_by(year, location, site, level, transect, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   ungroup() %>% 
   mutate(abundance = sqrt(abundance)) %>% 
-  spread(genusspecies, abundance, fill = 0)
+  spread(genus_species, abundance, fill = 0)
 
 data_c_cedros_groups <- anosim_c_cedros %>% 
   select(year, location, site, level) %>% 
@@ -712,7 +715,7 @@ kelp11 <- kelp %>%
   filter(year < 2013)
 
 Stot <- kelp11 %>% 
-  group_by(location, genusspecies) %>% 
+  group_by(location, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
   filter(n > 0) %>% 
   group_by(location) %>% 
@@ -721,7 +724,7 @@ Stot <- kelp11 %>%
 
 Stot_wo0 <- kelp11 %>% 
   filter(transect > 0) %>% 
-  group_by(location, genusspecies) %>% 
+  group_by(location, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
   filter(n > 0) %>% 
   group_by(location) %>% 
@@ -729,7 +732,7 @@ Stot_wo0 <- kelp11 %>%
   select(location, Stot_wo0 = S)
 
 S_bar <- kelp11 %>% 
-  group_by(location, site, zone, level, transect, genusspecies) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
   filter(n > 0) %>%
   group_by(location, site, zone, level, transect) %>% 
@@ -746,7 +749,7 @@ S_bar <- kelp11 %>%
 
 S_bar_wo0 <- kelp11 %>% 
   filter(transect > 0) %>%
-  group_by(location, site, zone, level, transect, genusspecies) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
   filter(n > 0) %>%
   group_by(location, site, zone, level, transect) %>% 
@@ -776,7 +779,7 @@ D <- kelp11 %>%
 
 H <- kelp11 %>% 
   filter(transect > 0) %>% 
-  group_by(location, site, zone, level, transect, genusspecies) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
   summarize(ni = sum(abundance, na.rm = T)) %>% 
   group_by(location, site, zone, level, transect) %>% 
   mutate(N = sum(ni, na.rm = T)) %>% 
@@ -796,7 +799,7 @@ H <- kelp11 %>%
 
 J <- kelp11 %>% 
   filter(transect > 0) %>% 
-  group_by(location, site, zone, level, transect, genusspecies) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
   summarize(ni = sum(abundance, na.rm = T)) %>% 
   filter(ni > 0) %>% 
   group_by(location, site, zone, level, transect) %>% 
@@ -821,7 +824,7 @@ J <- kelp11 %>%
 
 L <- kelp11 %>% 
   filter(transect > 0) %>% 
-  group_by(location, site, zone, level, transect, genusspecies) %>% 
+  group_by(location, site, zone, level, transect, genus_species) %>% 
   summarize(ni = sum(abundance, na.rm = T)) %>% 
   filter(ni > 0) %>% 
   group_by(location, site, zone, level, transect) %>% 

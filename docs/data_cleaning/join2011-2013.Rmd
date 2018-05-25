@@ -79,7 +79,9 @@ data_final <- data %>%
   mutate(Class = ifelse(GenusSpecies == "Sebastes spp", "Actinopterygii", Class),
          Order = ifelse(GenusSpecies == "Sebastes spp", "Scorpaeniformes", Order),
          Family = ifelse(GenusSpecies == "Sebastes spp", "Sebastidae", Family),
-         Genus = ifelse(GenusSpecies == "Sebastes spp", "Sebastes", Genus)) %>% 
+         Genus = ifelse(GenusSpecies == "Sebastes spp", "Sebastes", Genus),
+         Latitude = ifelse(Location == "COL", 30.96, Latitude),
+         Longitude = ifelse(Location == "COL", -116.27, Longitude)) %>% 
   dplyr::select(ID, Location, Site, Zone, Level, Latitude, Longitude, Transect, KelpDensity, GenusSpecies, TotalLength, Abundance, aTL2TW, bTL2TW, NT, Lm, Lmax, Lm, everything()) %>% 
   janitor::clean_names()
 
