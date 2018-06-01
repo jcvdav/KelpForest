@@ -2,7 +2,9 @@
 title: "Figuras y tablas finales"
 author: "Juan Carlos Villaseñor-Derbez"
 date: "Last update `r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    fig_caption: yes
 ---
 
 # Cambios al 28/05/2018
@@ -67,7 +69,8 @@ kelp <- read.csv(here("data", "Peces_KelpForest_2011-2013.csv"),
 
 ```{r}
 kelp11 <- kelp %>% 
-  filter(year < 2013)
+  filter(year < 2013,
+         level == "Bottom")
 ```
 
 
@@ -228,7 +231,7 @@ Stot %>%
 
 ### Figura
 
-```{r, fig.width = 6, fig.height = 10}
+```{r, fig.width = 6, fig.height = 10, fig.cap = "Ecological indices by site for 2011. Sites are arranged latitudinally left - right = nort - south. D = Density (org / transect), J = Evenness, 1 - Lambda = Dominance, S mean = average species richness with and without T0, S total = total number of specie sobserved per site with and without T0."}
 Stot <- kelp11 %>% 
   group_by(location, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
@@ -294,7 +297,7 @@ D <- kelp11 %>%
   ungroup() %>% 
   select(location, value = D, sd) %>% 
   mutate(indicator = "D",
-         group = "D'",
+         group = "D",
          value = log10(value),
          sd = log10(sd))
 
@@ -339,7 +342,7 @@ J <- kelp11 %>%
   mutate(sd = ifelse(is.na(sd), 0, sd)) %>% 
   select(location, value = J, sd) %>% 
   mutate(indicator = "J",
-         group = "J / Lambda")
+         group = "J & 1 - Lambda")
 
 L <- kelp11 %>% 
   filter(transect > 0) %>% 
@@ -358,7 +361,7 @@ L <- kelp11 %>%
   ungroup() %>% 
   select(location, value = L, sd) %>% 
   mutate(indicator = "lambda",
-         group = "J / Lambda")
+         group = "J & 1 - Lambda")
 
 ind_2011 <- Stot %>% 
   rbind(Stot_wo0) %>% 
@@ -374,7 +377,7 @@ ind_2011 <- Stot %>%
          Indicator = indicator) %>% 
   transform(Location = reorder(Location, latitude)) %>% 
   mutate(year = 2011) %>% 
-  mutate(group = fct_relevel(group, c("D'", "J / Lambda", "Shannon")))
+  mutate(group = fct_relevel(group, c("D'", "J & 1 - Lambda", "Shannon")))
   
   
 ggplot(ind_2011, aes(x = Location, y = Value)) +
@@ -394,8 +397,9 @@ ggplot(ind_2011, aes(x = Location, y = Value)) +
 ## nMDS
 
 ```{r}
-data_test2 <- kelp11 %>% 
-  filter(transect > 0) %>%
+data_test2 <- kelp %>% 
+  filter(transect > 0,
+         year < 2013) %>%
   group_by(location, site, level, transect, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   spread(genus_species, abundance, fill = 0) %>% 
@@ -475,7 +479,8 @@ p3 <- plot_data %>%
   coord_equal() +
   scale_fill_viridis_d(guide = F) +
   annotate(geom = "text", x = 0, y = 0.5, label = stress)+
-  scale_shape_manual(values = c(21, 24), name = "Zone")
+  scale_shape_manual(values = c(21, 24), name = "Zone") +
+  coord_equal(ratio = 1.2)
 
 ```
 
@@ -488,7 +493,8 @@ plot_grid(p1, p2, p3, ncol = 2, labels = "AUTO")
 
 ```{r}
 kelp11 %>% 
-  filter(transect > 0) %>%
+  filter(transect > 0,
+         level == "Bottom") %>%
   group_by(location, site, zone, level, transect, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
   spread(genus_species, n, fill = 0) %>% 
@@ -497,13 +503,16 @@ kelp11 %>%
   summarize(D = mean(n, na.rm = T),
             sd = sd(n, na.rm = T)) %>% 
   ungroup() %>% 
+  filter(D > 0) %>% 
   mutate(D = formatC(D, digits = 2, format = "f"),
          sd = formatC(sd, digits = 2, format = "f"),
          D = paste(D, "$\\pm$", sd)) %>% 
+  left_join(loc_data) %>%
+  transform(location  = reorder(location, -latitude)) %>% 
   select(location, genus_species, D) %>% 
-  spread(location, D, fill = "0") %>% 
+  spread(location, D, fill = "") %>% 
   rename(Species = genus_species) %>% 
-  knitr::kable(escape = F)
+  knitr::kable(escape = F, caption = "Density (org / transect) by species and site. Sites are arranged latitudinally left - right = north - south.")
 
 ```
 
@@ -519,7 +528,9 @@ source('~/GitHub/bvi/bvi_boxplot.R')
 
 ```{r}
 
-bvi_results <- filter(kelp, transect > 0) %>%
+bvi_results <- filter(kelp,
+                      transect > 0,
+                      level == "Bottom") %>%
   filter(year < 2013) %>%
   group_by(location, site, level, transect, genus_species) %>%
   summarize(n = sum(abundance)) %>%
@@ -559,7 +570,7 @@ bvi_results %>%
 ```
 
 
-```{r, fig.width = 8, fig.height = 4.5}
+```{r, fig.width = 8, fig.height = 4.5, fig.cap = "relative BVI for species by site. Sites are arranged latitudinally from left - right = north - south."}
 bvi_results %>% 
   select(-c(BVI, rBVI)) %>%
   gather(Sample, Score, -c(Spp)) %>% 
@@ -580,7 +591,7 @@ bvi_results %>%
 ```
 
 
-```{r}
+```{r, fig.width = 8, fig.cap = "BVI scores for each species by site. Sites are arranged latitudinally left - right = nort - south."}
 lats <- group_by(kelp11, location, latitude) %>% 
   count() %>% 
   select(location, latitude) %>% 
@@ -703,7 +714,8 @@ kelp11 %>%
 
 ```{r}
 kelp13 <- kelp %>% 
-  filter(year == 2013)
+  filter(year == 2013,
+         level == "Bottom")
 
 Stot <- kelp13 %>% 
   group_by(location, genus_species) %>% 
@@ -851,7 +863,7 @@ Stot %>%
 
 ### Figura
 
-```{r, fig.width = 6, fig.height = 8}
+```{r, fig.width = 6, fig.height = 8, fig.cap = "Comparision of ecological indices by site for 2011 and 2013. Sites are arranged latitudinally left - right = nort - south. D = Density (org / transect), J = Evenness, 1 - Lambda = Dominance, S mean = average species richness with and without T0, S total = total number of specie sobserved per site with and without T0."}
 Stot <- kelp13 %>% 
   group_by(location, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
@@ -917,7 +929,7 @@ D <- kelp13 %>%
   ungroup() %>% 
   select(location, value = D, sd) %>% 
   mutate(indicator = "D",
-         group = "D'",
+         group = "D",
          value = log10(value),
          sd = log10(sd))
 
@@ -962,7 +974,7 @@ J <- kelp13 %>%
   mutate(sd = ifelse(is.na(sd), 0, sd)) %>% 
   select(location, value = J, sd) %>% 
   mutate(indicator = "J",
-         group = "J / Lambda")
+         group = "J & 1 - Lambda")
 
 L <- kelp13 %>% 
   filter(transect > 0) %>% 
@@ -981,7 +993,7 @@ L <- kelp13 %>%
   ungroup() %>% 
   select(location, value = L, sd) %>% 
   mutate(indicator = "lambda",
-         group = "J / Lambda")
+         group = "J & 1 - Lambda")
 loc_data <- kelp13 %>% 
   group_by(location) %>% 
   summarize(latitude = mean(latitude),
@@ -996,7 +1008,7 @@ ind_2013 <- Stot %>%
   rbind(H) %>% 
   rbind(J) %>% 
   rbind(L)  %>% 
-  mutate(group = fct_relevel(group, c("D'", "J / Lambda", "Shannon")))%>% 
+  mutate(group = fct_relevel(group, c("D'", "J & 1 - Lambda", "Shannon")))%>% 
   left_join(loc_data, by = "location") %>% 
   rename(Location = location,
          Value = value,
@@ -1023,7 +1035,7 @@ ggplot(ind_2013, aes(x = Location, y = Value, shape = year)) +
 
 ## nMDS
 
-```{r, fig.height = 8.5, fig.width = 6, fig.cap = "nMDS for sites by bottom (A), and midwater (A)."}
+```{r, fig.height = 8.5, fig.width = 6, fig.cap = "nMDS for sites by bottom (A), and midwater (B)."}
 anosim_c_cedros <- kelp %>% 
   filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
          level == "Bottom") %>% 
