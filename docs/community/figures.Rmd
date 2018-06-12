@@ -277,7 +277,7 @@ D_2011 <- kelp11 %>%
   theme(strip.background = element_blank(),
         axis.text = element_text(size = 8),
         axis.title.x = element_text(size = 12)) +
-  labs(x = "", y = expression(Org~m^{-2}))
+  labs(x = "", y = expression(log[10](Org~m^{-2})))
 
 H_2011 <- kelp11 %>% 
   filter(transect > 0) %>% 
@@ -772,7 +772,7 @@ D_2013 <- kelp %>%
                                          size=0.5,
                                          linetype = "solid", 
                                          colour = "black")) +
-  labs(x = "", y = expression(Org~m^{-2})) +
+  labs(x = "", y = expression(log[10](Org~m^{-2}))) +
   scale_fill_brewer(palette = "Set1", direction = -1, name = "Year")
 
 H_2013 <- kelp %>% 
@@ -876,8 +876,8 @@ cbind(data_c_cedros_groups, scores(mds)) %>%
   ggplot(aes(x = NMDS1, y = NMDS2)) +
   geom_line(aes(group = location), linetype = "dashed") +
   geom_point(aes(shape = year, color = location), size = 4) +
-  coord_equal() +
-  scale_color_brewer(palette = "Paired") +
+  scale_color_brewer(palette = "Paired", name = "Location") +
+  scale_shape_discrete(name = "Year")
   annotate(geom = "text", x = 0, y = 0.5, label = stress)
 ```
 
