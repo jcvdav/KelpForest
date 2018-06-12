@@ -428,7 +428,7 @@ p3 <- plot_data %>%
         legend.title = element_text(size = 10))
 ```
 
-```{r, fig.height = 10, fig.width = 5, fig.cap = "Ordination analysis for 17 kelp forests evaluated in 2011. Panels A - C show all transects colored by sites (A), and habitat (B). Panel C shows the ordination analysis for mean densities per site and zone but only for bottom transects.."}
+```{r, fig.height = 10, fig.width = 5, fig.cap = "Ordination analysis for 17 kelp forests evaluated in 2011. Panels A - C show all transects colored by sites (A), and habitat (B). Panel C shows the ordination analysis for mean densities per site and zone but only for bottom transects."}
 plot_grid(p1, p2, p3, ncol = 1, labels = "AUTO")
 ```
 
@@ -877,8 +877,8 @@ cbind(data_c_cedros_groups, scores(mds)) %>%
   geom_line(aes(group = location), linetype = "dashed") +
   geom_point(aes(shape = year, color = location), size = 4) +
   scale_color_brewer(palette = "Paired", name = "Location") +
-  scale_shape_discrete(name = "Year")
-  annotate(geom = "text", x = 0, y = 0.5, label = stress)
+  scale_shape_discrete(name = "Year") +
+  annotate(geom = "text", x = -0.2, y = 0.2, label = stress)
 ```
 
 ## nMDS fondo y media agua
@@ -916,7 +916,7 @@ p1 <- cbind(data_c_cedros_groups, scores(mds)) %>%
   geom_point(aes(shape = year, color = location), size = 4) +
   coord_equal() +
   scale_color_brewer(palette = "Paired") +
-  annotate(geom = "text", x = 0, y = 0.5, label = stress)
+  annotate(geom = "text", x = 0, y = 0.3, label = stress)
 
 # Reciclamos el codigo y lo hacemos ahora para media agua
 anosim_c_cedros <- kelp %>% 
