@@ -251,6 +251,8 @@ S_2011 <- specpool(x = S_matrix, pool = S_groups$location, smallsample = T) %>%
   as.data.frame() %>% 
   mutate(location = rownames(.)) %>% 
   select(location, value = boot, se = boot.se) %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value)) +
   geom_errorbar(aes(ymin = value - se, ymax = value + se), width = 0.2) +
   geom_point(fill = "steelblue", size = 2, color = "black", shape = 21) + 
@@ -270,6 +272,8 @@ D_2011 <- kelp11 %>%
             sd = sd(n, na.rm = T)) %>% 
   ungroup() %>% 
   select(location, value = D, sd) %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value)) +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = 0.2) +
   geom_point(fill = "steelblue", size = 2, color = "black", shape = 21) + 
@@ -295,6 +299,8 @@ H_2011 <- kelp11 %>%
             sd = sd(Hi, na.rm = T)) %>% 
   ungroup() %>% 
   select(location, value = H, sd) %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value)) +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = 0.2) +
   geom_point(fill = "steelblue", size = 2, color = "black", shape = 21) + 
@@ -320,6 +326,8 @@ L_2011 <- kelp11 %>%
             sd = sd(Li, na.rm = T)) %>% 
   ungroup() %>% 
   select(location, value = L, sd) %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value)) +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = 0.2) +
   geom_point(fill = "steelblue", size = 2, color = "black", shape = 21) + 
@@ -436,9 +444,10 @@ plot_grid(p1, p2, p3, ncol = 1, labels = "AUTO")
 ## Tabla de densidades por especie y Sitio (Tabla 2)
 
 ```{r}
-kelp11 %>% 
+kelp %>% 
   filter(transect > 0,
          level == "Bottom") %>%
+  mutate(location = paste(location, year, sep = "-")) %>% 
   group_by(location, site, zone, level, transect, genus_species) %>% 
   summarize(n = sum(abundance, na.rm = T)) %>% 
   spread(genus_species, n, fill = 0) %>% 
@@ -709,10 +718,12 @@ Stot_wo0 %>%
 
 ```{r, fig.width = 8, fig.height = 4, fig.cap = "Comparision of ecological indices by site for 2011 (blue) and 2013 (red). Sites are arranged latitudinally left - right = nort - south."}
 
+kelp <- kelp %>% 
+  mutate(year = ifelse(year == 2012, 2011, year))
 
 S_data <- kelp %>% 
   filter(transect > 0,
-         location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
+         # location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
          level == "Bottom") %>% 
   group_by(year, location, site, zone, level, transect, genus_species) %>% 
   summarize(N = sum(abundance, na.rm = T)) %>% 
@@ -733,9 +744,11 @@ S_2013 <- specpool(x = S_matrix, pool = S_groups$group, smallsample = T) %>%
   mutate(group = rownames(.)) %>% 
   select(group, value = boot, se = boot.se) %>% 
   left_join(S_groups, by = "group") %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value, fill = year)) +
   geom_errorbar(aes(ymin = value - se, ymax = value + se), width = 0.2) +
-  geom_point( size = 2, color = "black", shape = 21) + 
+  geom_point( size = 2, color = "black", shape = 21, position = position_dodge(width = 0.5)) + 
   coord_flip() +
   theme(strip.background = element_blank(),
         axis.text = element_text(size = 8),
@@ -746,7 +759,7 @@ S_2013 <- specpool(x = S_matrix, pool = S_groups$group, smallsample = T) %>%
 
 D_2013 <- kelp %>% 
   filter(transect > 0,
-         location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
+         # location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
          level == "Bottom") %>% 
   filter(!genus_species == "Engraulis mordax") %>% 
   group_by(year, location, site, zone, level, transect) %>% 
@@ -757,6 +770,8 @@ D_2013 <- kelp %>%
   ungroup() %>% 
   select(year, location, value = D, sd) %>% 
   mutate(year = as.character(year)) %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value, fill = year)) +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = 0.2, position = position_dodge(width = 0.5)) +
   geom_point(size = 2, color = "black", shape = 21, position = position_dodge(width = 0.5)) + 
@@ -777,7 +792,7 @@ D_2013 <- kelp %>%
 
 H_2013 <- kelp %>% 
   filter(transect > 0,
-         location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
+         # location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
          level == "Bottom") %>% 
   group_by(year, location, site, zone, level, transect, genus_species) %>% 
   summarize(ni = sum(abundance, na.rm = T)) %>% 
@@ -794,6 +809,8 @@ H_2013 <- kelp %>%
   ungroup() %>% 
   select(year, location, value = H, sd) %>% 
   mutate(year = as.character(year)) %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value, fill = year)) +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = 0.2, position = position_dodge(width = 0.5)) +
   geom_point(size = 2, color = "black", shape = 21, position = position_dodge(width = 0.5)) + 
@@ -807,7 +824,7 @@ H_2013 <- kelp %>%
 
 L_2013 <- kelp %>% 
   filter(transect > 0,
-         location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
+         # location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
          level == "Bottom") %>% 
   group_by(year, location, site, zone, level, transect, genus_species) %>% 
   summarize(ni = sum(abundance, na.rm = T)) %>% 
@@ -824,6 +841,8 @@ L_2013 <- kelp %>%
   ungroup() %>% 
   select(year, location, value = L, sd)%>% 
   mutate(year = as.character(year)) %>% 
+  left_join(loc_data, by = "location") %>% 
+  transform(location = reorder(location, latitude)) %>% 
   ggplot(aes(x = location, y = value, fill = year)) +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = 0.2, position = position_dodge(width = 0.5)) +
   geom_point(size = 2, color = "black", shape = 21, position = position_dodge(width = 0.5)) + 
@@ -837,11 +856,6 @@ L_2013 <- kelp %>%
 
 (index_2013 <- cowplot::plot_grid(S_2013, D_2013, H_2013, L_2013, ncol = 4, labels = "AUTO"))
 ```
-
-```{r, fig.height = 10, fig.width = 8}
-cowplot::plot_grid(index_2011, index_2013, ncol = 1)
-```
-
 
 ## nMDS
 
