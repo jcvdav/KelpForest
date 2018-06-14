@@ -7,42 +7,6 @@ output:
     fig_caption: yes
 ---
 
-# Cambios al 28/05/2018
-
-- Renombrar Sitios, Localidades, Zonas, Niveles, Habitat...
-
-    - Sitio es el manto, que se divide en Zonas N y S y tiene habitats F y MA.
-
-- En la figura 4, usar solamente 3 nMDS:
-  
-    - Todos los transectos, coloreados por sitio
-  
-    - Todos los transectos, coloreados por habitat
-  
-    - Promedios de densidad por sitio y zona, solamente transectos fondo
-  
-    - Seria mejor cambiar a otro esquema de colores?
-
-- Generar tabla 2
-    
-    - Densidades por especie y sitio (con desviaciones estandar)
-    
-    - Solamente ano 2011
-    
-    - No queremos una igual para 2013? O por lo menos un listado de presencia ausencia para todos los sitios / todos los años?
-  
-- Indicadores ecologicos
-      
-      - Nombres rotulados
-
-- Comparar 2011 - 2013
-    
-    - Modificar nMDS para tener un punto por sitio
-  
-Notas: 
-
-La transición por densidades se ve medio rara. Al hacerlo por IBV se "normalizan" las densidades para saber ponerla densidad en contexto con toda la comunidad. Posiblemente una forma itnermedia sea densidad o abundancia relativa?
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F, message = F, warning = F)
 ```
