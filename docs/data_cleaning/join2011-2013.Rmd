@@ -24,10 +24,8 @@ suppressPackageStartupMessages({
 data <- read_csv(file = here("raw_data", "kelp_forest_fish","Fish2011-2013.csv"), trim_ws = T, col_types = cols()) %>% 
   filter(!GenusSpecies == "Especie X") %>% 
   mutate(GenusSpecies = ifelse(GenusSpecies == "Xenistius californiensis", "Haemulon californiensis", GenusSpecies),
-         GenusSpecies = ifelse(GenusSpecies == "Urobatis halleri", "Urolophus halleri", GenusSpecies),
          GenusSpecies = ifelse(GenusSpecies == "Gibbonsia elgans/montereyensis", "Gibbonsia elegans", GenusSpecies),
          GenusSpecies = ifelse(GenusSpecies == "Scorpaena rubrivinctus", "Sebastes rubrivinctus", GenusSpecies),
-         GenusSpecies = ifelse(GenusSpecies == "Engraulix mordax/A. compressa", "Engraulis mordax", GenusSpecies),
          GenusSpecies = ifelse(GenusSpecies == "Artedius sp.", "Artedius spp", GenusSpecies),
          GenusSpecies = ifelse(GenusSpecies == "Sebastes sp", "Sebastes spp", GenusSpecies),
          GenusSpecies = ifelse(GenusSpecies == "Pareques sp", "Pareques spp", GenusSpecies),
@@ -61,6 +59,13 @@ sp_info <- species(species_list = sp_list, fields = c("BodyShapeI",
 ```
 
 ```{r}
+coords_2013 <- read.csv(file = here("raw_data", "kelp_forest_fish", "coordinates_2013.csv"),
+                        stringsAsFactors = F,
+                        strip.white = T)
+```
+
+
+```{r}
 kelp <- read.csv(file = here("raw_data", "kelp_forest_fish","KelpDensitiesTransect.csv")) %>% 
   select(ID, KelpAbundanceTransect, KelpDensityTransect)
 ```
@@ -68,7 +73,10 @@ kelp <- read.csv(file = here("raw_data", "kelp_forest_fish","KelpDensitiesTranse
 ```{r}
 data$Record <- seq(1, length(data$ID))
 
-data_final <- data %>%  
+data_final <- data %>% 
+  left_join(coords_2013, by = "Location") %>% 
+  mutate(Longitude = ifelse(is.na(Long), Longitude, Long),
+         Latitude = ifelse(is.na(Lat), Latitude, Lat)) %>% 
   left_join(species_bio, by = c("GenusSpecies" = "GeneroEspecie")) %>% 
   left_join(sp_info, by = "GenusSpecies") %>% 
   left_join(taxa, by = "GenusSpecies") %>% 
