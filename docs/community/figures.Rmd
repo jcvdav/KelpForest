@@ -36,18 +36,58 @@ kelp <- read.csv(here("data", "Peces_KelpForest_2011-2013.csv"),
 coastline <- readRDS(file = here("raw_data", "spatial", "coastline_mx.rds")) %>% 
   st_as_sf()
 
-group_by(kelp, location) %>%
-  summarize(lat = mean(latitude), lon = mean(longitude)) %>%
+data(World)
+World <- st_as_sf(World) %>% 
+  st_transform(crs = 4326) %>% 
+  filter(iso_a3 == "USA")
+
+all_points <- group_by(kelp, location, latitude, longitude) %>%
+  summarize(ln = n()) %>%
   ungroup() %>% 
-  transform(location = reorder(location, -lat)) %>% 
+  transform(location = reorder(location, -latitude))
+
+general <- all_points %>% 
   ggplot() +
+  geom_sf(data = World) +
   geom_sf(data = coastline) +
-  geom_point(aes(x = lon, y = lat, fill = location), size = 2, pch = 21) +
-  geom_label_repel(aes(x = lon, y = lat, label = location), point.padding = 1) +
-  scale_x_continuous(limits = c(-117.5, -114)) +
-  scale_y_continuous(limits = c(27.5, 32.5)) +
-  theme_bw() +
-  scale_fill_discrete(guide = guide_legend(ncol = 1, title = "Location"))
+  geom_point(aes(x = longitude, y = latitude, fill = location), size = 2, pch = 21) +
+  # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
+  scale_x_continuous(limits = c(-120, -108)) +
+  scale_y_continuous(limits = c(22, 36)) +
+  theme_bw()
+
+north <- all_points %>% 
+  ggplot() +
+  geom_sf(data = World) +
+  geom_sf(data = coastline) +
+  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21) +
+  # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
+  scale_x_continuous(limits = c(-117.5, -116)) +
+  scale_y_continuous(limits = c(31.5, 32.5)) +
+  theme_bw()
+
+center <- all_points %>% 
+  ggplot() +
+  geom_sf(data = World) +
+  geom_sf(data = coastline) +
+  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21) +
+  # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
+  scale_x_continuous(limits = c(-117,-115)) +
+  scale_y_continuous(limits = c(29.5, 31.5)) +
+  theme_bw()
+
+south <- all_points %>% 
+  ggplot() +
+  geom_sf(data = World) +
+  geom_sf(data = coastline) +
+  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21) +
+  # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
+  scale_x_continuous(limits = c(-116,-114)) +
+  scale_y_continuous(limits = c(27.5, 30)) +
+  theme_bw()
+
+right <- plot_grid(north, center, south, ncol = 1)
+plot_grid(general, right)
 ```
 
 
@@ -935,7 +975,8 @@ Presentamos las 9 localidades que se visitaron el 2011 y 2013. En la figura A se
 ```{r, fig.height = 8.5, fig.width = 5}
 anosim_c_cedros <- kelp %>% 
   filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
-         level == "Bottom") %>% 
+         level == "Bottom",
+         transect > 0) %>% 
   group_by(year, location, site, level, transect, genus_species) %>% 
   summarize(abundance = sum(abundance)) %>% 
   ungroup() %>% 
@@ -979,7 +1020,7 @@ p2 <- cbind(data_c_cedros_groups, scores(mds)) %>%
   geom_line(aes(group = location), linetype = "dashed") +
   geom_point(aes(shape = year, color = location), size = 4) +
   scale_color_brewer(palette = "Paired") +
-  scale_x_continuous(limits = c(-0.09, 0.13)) +
+  scale_x_continuous(limits = c(-0.2, 0.2)) +
   theme(aspect.ratio = 1,
         legend.position = "none")
 
@@ -1037,3 +1078,156 @@ tibble(species = sim$ASA_BMA$species) %>%
   scale_fill_viridis_d()
 ```
 
+# Kelp
+
+## Densidades de Kelp
+
+```{r}
+kelp %>% 
+  filter(level == "Bottom",
+         transect > 0) %>% 
+  group_by(year, location) %>% 
+  summarize(sd = sd(kelp_density, na.rm = T),
+            kelp_density = mean(kelp_density, na.rm = T)) %>% 
+  ungroup() %>% 
+  filter(kelp_density > 0) %>% 
+  ggplot(aes(x = location, y = kelp_density, color = as.character(year))) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = kelp_density - sd, ymax = kelp_density + sd), width = 0.2) +
+  coord_flip()
+```
+
+```{r}
+kelp_repeated <- kelp %>% 
+  filter(location %in% c("ASA", "BMA", "ERE", "ERO", "ISME", "ITSP", "RET", "SMI", "SSI"),
+         level == "Bottom",
+         transect > 0) %>% 
+  group_by(year, location) %>% 
+  summarize(kelp = mean(kelp_density, na.rm = T)) %>% 
+  ungroup()
+
+a <- cbind(data_c_cedros_groups, scores(mds)) %>% 
+    left_join(kelp_repeated, by = c("year", "location"))
+
+a %>% 
+  mutate(year = as.factor(year)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_line(aes(group = location), linetype = "dashed") +
+  geom_point(aes(color = location, shape = year, size = kelp)) +
+  geom_contour(aes(z = kelp)) +
+  scale_color_brewer(palette = "Paired", name = "Location") +
+  scale_shape_discrete(name = "Year") +
+  annotate(geom = "text", x = 0, y = 0.3, label = stress) +
+  theme(aspect.ratio = 1,
+        legend.justification = c(0, 0),
+        legend.position = c(0, 0.4),
+        legend.box = "horizontal") +
+  guides(color = guide_legend(order = 1),
+         shape = guide_legend(order = 0))
+
+plot(NMDS1 ~ kelp, data = a)
+
+cor(a$NMDS1, a$kelp, method = "pearson")
+
+cor(a$NMDS1, a$kelp, method = "spearman")
+```
+
+```{r}
+data_test2 <- kelp11 %>% 
+  filter(transect > 0,
+         level == "Bottom") %>%
+  group_by(location, site, level, transect, genus_species) %>% 
+  summarize(abundance = sum(abundance)) %>% 
+  spread(genus_species, abundance, fill = 0) %>% 
+  gather(genus_species, abundance, -c(location, site, level, transect)) %>%
+  ungroup() %>% 
+  group_by(location, site, level, transect, genus_species) %>% 
+  summarize(abundance = mean(abundance)) %>% 
+  ungroup() %>% 
+  mutate(abundance = sqrt(abundance)) %>% 
+  spread(genus_species, abundance, fill = 0)
+
+data_test2_groups <- data_test2 %>% 
+  select(location, site, level, transect) %>% 
+  mutate(loc_site = paste(location, site, sep = "-"))
+
+data_test2_samples <- data_test2 %>% 
+  select(-c(location, site, level)) %>% 
+  vegdist(method = "bray")
+
+kelp_2011 <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site, transect, kelp_density) %>% 
+  count() %>% 
+  ungroup()
+
+set.seed(43)
+mds <- metaMDS(data_test2_samples, trace = F)
+
+stress <- paste("2D Stress =", formatC(mds$grstress, digits = 4, format = "f"))
+
+plot_data2 <- cbind(data_test2_groups, scores(mds)) %>% 
+  left_join(kelp_2011, by = c("location", "site", "transect"))
+
+plot_data2 %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, sitio = site)) +
+  geom_point(aes(fill = location, size = kelp_density), alpha = 0.8, shape = 21) +
+  coord_equal() +
+  scale_fill_manual(values = colorRamps::matlab.like(17), guide = guide_legend(ncol = 2, title = "Location")) +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress)+
+  theme(legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10),
+        aspect.ratio = 1)
+
+cor(plot_data2$NMDS1, plot_data2$kelp_density, use = "pairwise.complete.obs")
+```
+
+```{r}
+data_test2 <- kelp11 %>% 
+  filter(transect > 0,
+         level == "Bottom") %>%
+  group_by(location, site, level, transect, genus_species) %>% 
+  summarize(abundance = sum(abundance)) %>% 
+  spread(genus_species, abundance, fill = 0) %>% 
+  gather(genus_species, abundance, -c(location, site, level, transect)) %>%
+  ungroup() %>% 
+  group_by(location, site, genus_species) %>% 
+  summarize(abundance = mean(abundance)) %>% 
+  ungroup() %>% 
+  mutate(abundance = sqrt(abundance)) %>% 
+  spread(genus_species, abundance, fill = 0)
+
+data_test2_groups <- data_test2 %>% 
+  select(location, site) %>% 
+  mutate(loc_site = paste(location, site, sep = "-"))
+
+data_test2_samples <- data_test2 %>% 
+  select(-c(location, site)) %>% 
+  vegdist(method = "bray")
+
+kelp_2011 <- kelp11 %>% 
+  filter(transect > 0) %>% 
+  group_by(location, site) %>% 
+  summarize(kelp_density = mean(kelp_density, na.rm = T)) %>% 
+  ungroup()
+
+set.seed(43)
+mds <- metaMDS(data_test2_samples, trace = F)
+
+stress <- paste("2D Stress =", formatC(mds$grstress, digits = 4, format = "f"))
+
+plot_data2 <- cbind(data_test2_groups, scores(mds)) %>% 
+  left_join(kelp_2011, by = c("location", "site"))
+
+plot_data2 %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, sitio = site)) +
+  geom_point(aes(fill = location, size = kelp_density), alpha = 0.8, shape = 21) +
+  coord_equal() +
+  scale_fill_manual(values = colorRamps::matlab.like(17), guide = guide_legend(ncol = 2, title = "Location")) +
+  annotate(geom = "text", x = 0, y = 0.5, label = stress)+
+  theme(legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10),
+        aspect.ratio = 1)
+
+cor(plot_data2$NMDS1, plot_data2$kelp_density, use = "pairwise.complete.obs")
+```
