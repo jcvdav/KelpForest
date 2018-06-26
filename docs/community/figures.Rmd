@@ -50,7 +50,7 @@ general <- all_points %>%
   ggplot() +
   geom_sf(data = World) +
   geom_sf(data = coastline) +
-  geom_point(aes(x = longitude, y = latitude, fill = location), size = 2, pch = 21) +
+  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21, fill = "steelblue") +
   # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
   scale_x_continuous(limits = c(-120, -108)) +
   scale_y_continuous(limits = c(22, 36)) +
@@ -60,7 +60,7 @@ north <- all_points %>%
   ggplot() +
   geom_sf(data = World) +
   geom_sf(data = coastline) +
-  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21) +
+  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21, fill = "steelblue") +
   # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
   scale_x_continuous(limits = c(-117.5, -116)) +
   scale_y_continuous(limits = c(31.5, 32.5)) +
@@ -70,7 +70,7 @@ center <- all_points %>%
   ggplot() +
   geom_sf(data = World) +
   geom_sf(data = coastline) +
-  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21) +
+  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21, fill = "steelblue") +
   # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
   scale_x_continuous(limits = c(-117,-115)) +
   scale_y_continuous(limits = c(29.5, 31.5)) +
@@ -80,7 +80,7 @@ south <- all_points %>%
   ggplot() +
   geom_sf(data = World) +
   geom_sf(data = coastline) +
-  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21) +
+  geom_point(aes(x = longitude, y = latitude), size = 2, pch = 21, fill = "steelblue") +
   # geom_label_repel(aes(x = longitude, y = latitude, label = location)) +
   scale_x_continuous(limits = c(-116,-114)) +
   scale_y_continuous(limits = c(27.5, 30)) +
@@ -1026,7 +1026,6 @@ p2 <- cbind(data_c_cedros_groups, scores(mds)) %>%
 
 plot_grid(p1, p2, labels = "AUTO", ncol = 1)
 ```
-
 ## SIMPER	
 	
 ```{r, eval = F}	
@@ -1078,6 +1077,41 @@ tibble(species = sim$ASA_BMA$species) %>%
   scale_fill_viridis_d()
 ```
 
+# Temperature
+
+```{r}
+all_temps <- read.csv(here("data", "temps.csv"), stringsAsFactors = F)
+
+mdsT <- cbind(data_c_cedros_groups, scores(mds)) %>%
+  left_join(all_temps, by = c("location", "year"))
+
+ggplot(data = mdsT, aes(x = NMDS1, y = NMDS2, fill = temp, z = temp)) +
+  geom_point(size = 4, shape = 21) + geom_contour() +
+  geom_line(aes(group = location), linetype = "dashed") +
+  theme(aspect.ratio = 1)
+
+mdsT %>% 
+  mutate(year = as.factor(year)) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_line(aes(group = location), linetype = "dashed") +
+  geom_point(aes(color = location, shape = year, size = temp)) +
+  scale_color_brewer(palette = "Paired", name = "Location") +
+  scale_shape_discrete(name = "Year") +
+  annotate(geom = "text", x = 0, y = 0.3, label = stress) +
+  theme(aspect.ratio = 1,
+        legend.justification = c(0, 0),
+        legend.position = c(0, 0.4),
+        legend.box = "horizontal") +
+  guides(color = guide_legend(order = 1),
+         shape = guide_legend(order = 0))
+
+r <- cor(mdsT$NMDS1, mdsT$temp, method = "pearson")
+tscore <- r * sqrt((18 - 2) / (1 - r^2))
+p <- 2*pt(tscore, df = 16, lower.tail=FALSE)
+```
+
+Pearson's r = `r r`, t(16) =  `r tscore` (p = `r p`)
+
 # Kelp
 
 ## Densidades de Kelp
@@ -1127,10 +1161,12 @@ a %>%
 
 plot(NMDS1 ~ kelp, data = a)
 
-cor(a$NMDS1, a$kelp, method = "pearson")
-
-cor(a$NMDS1, a$kelp, method = "spearman")
+r <- cor(a$NMDS1, a$kelp, method = "pearson")
+tscore <- r * sqrt((18 - 2) / (1 - r^2))
+p <- 2*pt(tscore, df = 16, lower.tail=FALSE)
 ```
+
+Pearson's r = `r r`, t(16) =  `r tscore` (p = `r p`)
 
 ```{r}
 data_test2 <- kelp11 %>% 
@@ -1228,6 +1264,28 @@ plot_data2 %>%
   theme(legend.text = element_text(size = 8),
         legend.title = element_text(size = 10),
         aspect.ratio = 1)
-
-cor(plot_data2$NMDS1, plot_data2$kelp_density, use = "pairwise.complete.obs")
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
