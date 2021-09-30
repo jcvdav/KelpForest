@@ -17,6 +17,9 @@ For some reason, back in 2013 I thought it would be a good idea to keep one exce
 I will read all sheets, and put them together into a standard format where each column is a variable and each row is a record. The minimum column names will be Year, Site, Zone, Level, Latitude, Longitude, Transect, GenusSpecies, Abundance, and Length.
 
 ```{r}
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
+
+
 suppressPackageStartupMessages({
   library(readxl)
   library(tidyverse)
@@ -81,7 +84,7 @@ tidy_data <- all_data %>%
          Transect = substring(ID, nchar(ID)),
          Year = 2013,
          Area = 60,
-         Length = as.numeric(length))
+         Length = as.numeric(Length))
 
 tidy_data$Record <- seq(1, dim(tidy_data)[1])
 
@@ -90,7 +93,6 @@ head(tidy_data)
 Length-weight
 
 ```{r, message = F, warning = F}
-library(rfishbase)
 sp_list <- unique(tidy_data$GenusSpecies)
 
 species_bio <- MPAtools::species_bio %>% 
@@ -101,24 +103,27 @@ species_bio <- MPAtools::species_bio %>%
 Get taxonomy
 
 ```{r}
+library(rfishbase)
+
 taxa <- load_taxa() %>% 
-  mutate(GenusSpecies = paste(Genus, Species)) %>% 
-  select(GenusSpecies, Class, Order, Family, Genus) %>% 
-  filter(GenusSpecies %in% sp_list)
+  select(GenusSpecies = Species, Class, Order, Family, Genus) %>% 
+  filter(GenusSpecies %in% sp_list) %>% 
+  as_tibble()
 ```
 
 
 Obtain some important species info
 
 ```{r}
-sp_info <- species(species_list = sp_list, fields = c("BodyShapeI",
+sp_info <- species(species_list = sp_list, fields = c("Species",
+                                                      "BodyShapeI",
                                                       "DemersPelag",
                                                       "PriceCateg",
                                                       "UsedasBait",
                                                       "Aquarium",
                                                       "Comments",
                                                       "Importance")) %>% 
-  rename(GenusSpecies = sciname)
+  rename(GenusSpecies = Species)
 ```
 
 Lets incorporate some usefull data, like $\alpha$ and $\beta$ allometric growth parameters for each fish.

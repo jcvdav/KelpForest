@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Combining 2011 and 2013"
 output:
   html_document:
     toc: yes
@@ -45,17 +45,18 @@ species_bio <- MPAtools::species_bio %>%
 
 ```{r}
 taxa <- load_taxa() %>% 
-  mutate(GenusSpecies = paste(Genus, Species)) %>% 
-  select(GenusSpecies, Class, Order, Family, Genus) %>% 
-  filter(GenusSpecies %in% sp_list)
+  select(GenusSpecies = Species, Class, Order, Family, Genus) %>% 
+  filter(GenusSpecies %in% sp_list) %>% 
+  as_tibble()
 ```
 
 ```{r}
-sp_info <- species(species_list = sp_list, fields = c("BodyShapeI",
+sp_info <- species(species_list = sp_list, fields = c("Species",
+                                                      "BodyShapeI",
                                                       "DemersPelag",
                                                       "PriceCateg",
                                                       "UsedasBait", "Aquarium", "Comments", "Importance")) %>% 
-  rename(GenusSpecies = sciname)
+  rename(GenusSpecies = Species)
 ```
 
 ```{r}
@@ -97,5 +98,5 @@ head(data_final)
 ```
 
 ```{r}
-write_csv(data_final, path = here("data","Peces_KelpForest_2011-2013.csv"))
+write_csv(data_final, file = here("data","Peces_KelpForest_2011-2013.csv"))
 ```
